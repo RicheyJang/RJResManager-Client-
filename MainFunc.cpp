@@ -24,39 +24,64 @@ bool initItems()
     base.close();
     return true;
 }
+
 QString getOrderSql(int onwhich)
 {
-    Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-    QSqlDatabase database = base->getDatabase();
-    QSqlQuery query(database);
-    QSqlQuery itemQuery(database);
-    QString iden = thisUser.identity;
-    for (QChar c : iden) {
-        if (!c.isLetter())
-            return nullptr;
-    }
-    if (onwhich == ONDealOrder)
+    QString sql = "";
+    if (onwhich == ONDealOrder || onwhich == ONNowOrder) {
+        Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+        QSqlDatabase database = base->getDatabase();
+        QSqlQuery query(database);
+        QSqlQuery itemQuery(database);
+        QString iden = thisUser.identity;
+        for (QChar c : iden) {
+            if (!c.isLetter())
+                return nullptr;
+        }
         query.exec("select status from authority where " + iden + "=1 or " + iden + "=3;");
-    else if (onwhich == ONNowOrder)
-        query.exec("select status from authority where " + iden + "=2 or " + iden + "=3;");
-    else
-        return nullptr;
-    QString sql = " false";
-    while (query.next()) {
-        sql = sql + " or status='" + query.value(0).toString() + "'";
+        if (onwhich == ONDealOrder)
+            //TODO 待处理订单的人员检查
+            sql = " false";
+        else {
+            QString iden = " ( " + thisUser.identity + "='" + thisUser.truename + "' ";
+            QString teacher = " teacher='" + thisUser.truename + "' ) ";
+            sql = iden + "or" + teacher;
+        }
+        while (query.next()) {
+            if (onwhich == ONDealOrder)
+                sql = sql + " or status='" + query.value(0).toString() + "'";
+            else
+                sql = sql + " and status!='" + query.value(0).toString() + "'";
+        }
+        sql.append(' ');
+        base->close();
+        delete base;
+    } else if (onwhich == ONHistory) {
+        sql = " false ";
+        //TODO 历史订单查询sql待写
+    } else {
+        sql = " false ";
     }
-    sql = sql + " ";
-    base->close();
     return sql;
+}
+QString getOrderSql(int onwhich, QDate start, QDate end)
+{
+    QString pre = getOrderSql(onwhich);
+    end = end.addDays(1);
+    QString after = " starttime between '" + start.toString("yyyy-MM-dd") + "' and '" + end.toString("yyyy-MM-dd") + "' ";
+    return QString(" (" + pre + ") and (" + after + ") ");
 }
 bool formOrders(QString whereSql, QVector<OneOrder>& orders)
 {
     orders.clear();
     Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+    if(!base->check())
+        return false;
     QSqlDatabase database = base->getDatabase();
     QSqlQuery query(database);
     QSqlQuery itemQuery(database);
-    query.exec("select id,workshop,useclass,starttime,usetime,more,teacher,header,admin,keeper,accountant,status from orders where" + whereSql + ";");
+    if(!query.exec("select id,workshop,useclass,starttime,usetime,more,teacher,header,admin,keeper,accountant,status from orders where" + whereSql + ";"))
+        return false;
     while (query.next()) {
         OneOrder* order = new OneOrder;
         order->id = query.value(0).toInt();
@@ -83,26 +108,63 @@ bool formOrders(QString whereSql, QVector<OneOrder>& orders)
         orders.push_back(*order);
     }
     base->close();
+    delete base;
+    std::sort(orders.begin(),orders.end());
     return true;
 }
 bool initDealOrders()
 {
-    Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-    QSqlDatabase database = base->getDatabase();
-    QSqlQuery query(database);
-    QSqlQuery itemQuery(database);
     QString sql = getOrderSql(ONDealOrder);
     return formOrders(sql, dealorders);
 }
+bool flushDealOrders(QDate start, QDate end)
+{
+    QString sql = getOrderSql(ONDealOrder, start, end);
+    bool res=formOrders(sql, dealorders);
+    return res;
+}
 bool initNowOrders()
 {
-    noworders.clear();
-    Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-    QSqlDatabase database = base->getDatabase();
-    QSqlQuery query(database);
-    QSqlQuery itemQuery(database);
     QString sql = getOrderSql(ONNowOrder);
     return formOrders(sql, noworders);
+}
+bool flushNowOrders(QDate start, QDate end)
+{
+    QString sql = getOrderSql(ONNowOrder, start, end);
+    bool res=formOrders(sql, noworders);
+    return res;
+}
+bool initSatus()
+{
+    Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+    if(!base->check())
+        return false;
+    QSqlDatabase database = base->getDatabase();
+    QSqlQuery query(database);
+    if(!query.exec("select status from authority;"))
+        return false;
+    config.statusList.clear();
+    config.statusList<<QString("");
+    while (query.next()) {
+        QString now=query.value(0).toString();
+        config.statusList<<now;
+    }
+    base->close();
+    delete base;
+    return true;
+}
+OneOrder* getOrder(int id)
+{
+    OneOrder order;
+    order.id=id;
+    QVector<OneOrder>::iterator it=std::lower_bound(noworders.begin(),noworders.end(),order);
+    if(it==noworders.end() || it->id!=id)
+    {
+        it=std::lower_bound(dealorders.begin(),dealorders.end(),order);
+        if(it==dealorders.end() || it->id!=id)
+            return nullptr;
+    }
+    return &(*it);
 }
 //TODO 按照时间范围更新当前订单及待处理订单，重写getOrderSql即可
 
@@ -189,9 +251,13 @@ QString toSHA256(QString s)
 Config::Config(QString file)
 {
     //TODO 配置文件待实现
+    TableOnePageRows = 10;
     ip = "127.0.0.1";
     serverPort = 2333;
     dataPort = 3306;
     UserAgent = "ResClient";
     basename = "finaltest";
+    statusList<<QString("")
+        <<QString("待一级审核")<<QString("一审不通过")<<QString("待二级审核")<<QString("二审不通过")
+               <<QString("审核通过(待出库)")<<QString("已出库")<<QString("仓库无法完成")<<QString("已完成");
 }

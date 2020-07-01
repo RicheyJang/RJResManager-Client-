@@ -14,6 +14,7 @@ HintComboBox::HintComboBox(QWidget* parent)
     setStringList(items);
     list = new HintList(parent);
     list->hide();
+    setView(new QListView());
     connect(this->lineEdit(), &QLineEdit::textEdited, this, &HintComboBox::showHint);
     connect(list, &QListWidget::itemClicked, this, &HintComboBox::selectOne);
 }

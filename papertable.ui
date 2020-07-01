@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>569</width>
+    <width>588</width>
     <height>416</height>
    </rect>
   </property>
@@ -149,6 +149,9 @@
    </item>
    <item row="1" column="0" colspan="9">
     <widget class="QTableWidget" name="Table">
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
      <property name="sortingEnabled">
       <bool>true</bool>
      </property>

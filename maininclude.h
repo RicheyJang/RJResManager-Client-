@@ -9,6 +9,7 @@
 /*-----宏定义结束---*/
 
 /*----头文件-------*/
+#include "QDBC.h"
 #include <QByteArray>
 #include <QCloseEvent>
 #include <QComboBox>
@@ -34,6 +35,7 @@
 #include <QSet>
 #include <QTableWidget>
 #include <QTableWidgetItem>
+#include <QtAlgorithms>
 #include <QVector>
 #include <qmath.h>
 /*----头文件结束---*/
@@ -46,6 +48,9 @@ public:
     int dataPort;
     QString UserAgent;
     QString basename;
+    QStringList statusList;
+
+    int TableOnePageRows;
     Config(QString file);
 };
 struct OneType {
@@ -91,6 +96,10 @@ public:
     QString keeper;
     QString accountant;
     QString status;
+    bool operator<(const OneOrder a) const
+    {
+        return id < a.id;
+    }
 };
 struct User {
 public:
@@ -121,8 +130,12 @@ extern Config config;
 bool initItems();
 bool initDealOrders();
 bool initNowOrders();
+bool initSatus();
+bool flushDealOrders(QDate start, QDate end);
+bool flushNowOrders(QDate start, QDate end);
 void addType(OneType atype, bool forCheck);
 bool hasType(QString res, QString name, QString type);
+OneOrder* getOrder(int id);
 const OneType* getType(int pid);
 int getTypePid(QString res, QString name, QString type);
 QString getUnits(QString res, QString name, QString type);

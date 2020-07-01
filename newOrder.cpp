@@ -8,6 +8,7 @@ NewOrder::NewOrder(QWidget* parent)
     ui->setupUi(this);
     setAttribute(Qt::WA_QuitOnClose, false);
     setAttribute(Qt::WA_DeleteOnClose, true);
+    setWindowTitle(QString("发起新订单"));
     isInNewOrder = true;
     ui->itemTable->setColumnCount(6);
     QStringList titles;
@@ -30,18 +31,51 @@ void NewOrder::setOrder(OneOrder order)
     ui->moreEdit->setText(order.more);
 }
 
-void NewOrder::changeOrder(OneOrder* order)
-{
-    isInNewOrder = false;
-    theOrder = order;
-    setOrder(*order);
-}
-
 void NewOrder::setModel(OneOrder order)
 {
     setOrder(order);
 }
 
+void NewOrder::changeOrder(OneOrder* order) //修改订单 窗口
+{
+    isInNewOrder = false;
+    theOrder = order;
+    setOrder(*order);
+    QString title=QString("修改订单 编号：")+QString::number(order->id);
+    setWindowTitle(title);
+}
+
+void NewOrder::showOrder(OneOrder order) //展示订单 窗口
+{
+    isInNewOrder = false;
+    QLayoutItem *child;
+    while ((child = ui->Layout_add->itemAt(0)) != nullptr) {
+        ui->Layout_add->removeItem(child);
+        delete child->widget();
+        delete child;
+        child = nullptr;
+    }
+    while ((child = ui->Layout_change->itemAt(0)) != nullptr) {
+        ui->Layout_change->removeItem(child);
+        delete child->widget();
+        delete child;
+        child = nullptr;
+    }
+    while ((child = ui->Layout_conferm->itemAt(0)) != nullptr) {
+        ui->Layout_conferm->removeItem(child);
+        delete child->widget();
+        delete child;
+        child = nullptr;
+    }
+    ui->classEdit->setReadOnly(true);
+    ui->moreEdit->setReadOnly(true);
+    setOrder(order);
+    QString title=QString("当前订单 编号：")+QString::number(order.id);
+    setWindowTitle(title);
+
+}
+
+/*----------辅助函数--------------*/
 void NewOrder::addOneItem(OneItem item)
 {
     int row = ui->itemTable->rowCount();
@@ -68,37 +102,6 @@ void NewOrder::addOneItem(OneItem item)
     ui->itemTable->setItem(row, 3, type);
     ui->itemTable->setItem(row, 4, num);
     ui->itemTable->setItem(row, 5, more);
-}
-
-void NewOrder::on_addItem_clicked()
-{
-    QString nums = ui->numEdit->text();
-    double num = nums.toDouble();
-    if (num <= 0) {
-        QMessageBox::information(nullptr, QString("错误"), QString("请正确填入物品数量"));
-        return;
-    }
-    QString res = ui->resBox->currentText();
-    QString name = ui->nameBox->currentText();
-    QString type = ui->typeBox->currentText();
-    int pid = getTypePid(res, name, type);
-    if (pid == 0) {
-        QMessageBox::information(nullptr, QString("错误"), QString("查无此物，请正确填入物品信息"));
-        return;
-    }
-    OneItem item;
-    item.pid = pid;
-    item.number = num;
-    item.more = ui->itemMoreEdit->text();
-    addOneItem(item);
-}
-
-void NewOrder::on_deleteItem_clicked()
-{
-    int row = ui->itemTable->rowCount();
-    int cr = ui->itemTable->currentRow();
-    ui->itemTable->removeRow(cr);
-    ui->itemTable->setRowCount(row - 1);
 }
 
 void NewOrder::flushBox(int index)
@@ -129,7 +132,59 @@ void NewOrder::flushBox(int index)
         }
         ui->typeBox->setStringList(QStringList::fromSet(set));
     }
-    qDebug() << QString::number(index) + " flush";
+    //    qDebug() << QString::number(index) + " flush";
+}
+/*----------辅助函数end----------*/
+
+/*-------按钮响应---------*/
+void NewOrder::on_addItem_clicked()
+{
+    QString nums = ui->numEdit->text();
+    double num = nums.toDouble();
+    if (num <= 0) {
+        QMessageBox::information(nullptr, QString("错误"), QString("请正确填入物品数量"));
+        return;
+    }
+    QString res = ui->resBox->currentText();
+    QString name = ui->nameBox->currentText();
+    QString type = ui->typeBox->currentText();
+    int pid = getTypePid(res, name, type);
+    if (pid == 0) {
+        QMessageBox::information(nullptr, QString("错误"), QString("查无此物，请正确填入物品信息"));
+        return;
+    }
+    OneItem item;
+    item.pid = pid;
+    item.number = num;
+    item.more = ui->itemMoreEdit->text();
+    addOneItem(item);
+}
+
+void NewOrder::on_changeItem_clicked()
+{
+    int row=ui->itemTable->currentRow();
+    QString res=ui->itemTable->item(row, 1)->text();
+    QString name=ui->itemTable->item(row, 2)->text();
+    QString type=ui->itemTable->item(row, 3)->text();
+    QString num = ui->itemTable->item(row, 4)->text().split(" ")[0];
+    QString more=ui->itemTable->item(row, 5)->text();
+    ui->resBox->setCurrentText(res);
+    ui->nameBox->setCurrentText(name);
+    ui->typeBox->setCurrentText(type);
+    ui->numEdit->setText(num);
+    ui->moreEdit->setText(more);
+
+    int rowCnt = ui->itemTable->rowCount();
+    ui->itemTable->removeRow(row);
+    ui->itemTable->setRowCount(rowCnt - 1);
+}
+
+void NewOrder::on_deleteItem_clicked()
+{
+    int row = ui->itemTable->rowCount();
+    int cr = ui->itemTable->currentRow();
+    ui->itemTable->removeRow(cr);
+    ui->itemTable->setRowCount(row - 1);
 }
 
 void NewOrder::on_resBox_currentTextChanged(const QString& arg1)
@@ -152,36 +207,47 @@ void NewOrder::on_typeBox_currentTextChanged(const QString& arg1)
 
 void NewOrder::on_confirm_clicked()
 {
-    if (isInNewOrder) {
-        QJsonObject json;
-        QJsonObject orderInf;
-        QJsonObject userInf;
-        userInf.insert("username", thisUser.username);
-        userInf.insert("password", thisUser.password);
+    QJsonObject json;
+    QJsonObject orderInf;
+    QJsonObject userInf;
+    userInf.insert("username", thisUser.username);
+    userInf.insert("password", thisUser.password);
 
-        orderInf.insert("useclass", QJsonValue(ui->classEdit->text()));
+    if(!isInNewOrder)
+        orderInf.insert("id", QJsonValue( theOrder->id ));
+    orderInf.insert("useclass", QJsonValue(ui->classEdit->text()));
+    if(isInNewOrder)
         orderInf.insert("starttime", QJsonValue(QDate::currentDate().toString("yyyy-MM-dd")));
-        orderInf.insert("more", QJsonValue(ui->moreEdit->toPlainText()));
+    orderInf.insert("more", QJsonValue(ui->moreEdit->toPlainText()));
 
-        QJsonArray items;
-        int row = ui->itemTable->rowCount();
-        for (int i = 0; i < row; i++) {
-            QJsonObject item;
-            item.insert("pid", QJsonValue(ui->itemTable->item(i, 0)->text().toInt()));
-            QString s = ui->itemTable->item(i, 4)->text().split(" ")[0];
-            item.insert("cnt", QJsonValue(s.toDouble()));
-            item.insert("more", QJsonValue(ui->itemTable->item(i, 5)->text()));
-            qDebug() << item.value("cnt");
-            items.append(QJsonValue(item));
-        }
-        json.insert("userInformation", QJsonValue(userInf));
-        json.insert("orderInformation", QJsonValue(orderInf));
-        json.insert("itemsInformation", QJsonValue(items));
-
-        postOn(json);
+    QJsonArray items;
+    int row = ui->itemTable->rowCount();
+    for (int i = 0; i < row; i++) {
+        QJsonObject item;
+        item.insert("pid", QJsonValue(ui->itemTable->item(i, 0)->text().toInt()));
+        QString s = ui->itemTable->item(i, 4)->text().split(" ")[0];
+        item.insert("cnt", QJsonValue(s.toDouble()));
+        item.insert("more", QJsonValue(ui->itemTable->item(i, 5)->text()));
+        //qDebug() << item.value("cnt");
+        items.append(QJsonValue(item));
     }
+    json.insert("userInformation", QJsonValue(userInf));
+    json.insert("orderInformation", QJsonValue(orderInf));
+    json.insert("itemsInformation", QJsonValue(items));
+
+    postOn(json);
 }
 
+void NewOrder::on_cancel_clicked()
+{
+    QMessageBox::StandardButton result = QMessageBox::question(nullptr, QString("确定？"), QString("是否放弃本订单"));
+    if (result == QMessageBox::Yes)
+        this->close();
+    return;
+}
+/*-------按钮响应end-------*/
+
+/*-------上传函数-------*/
 void NewOrder::postOn(QJsonObject json)
 {
     QJsonDocument document;
@@ -195,7 +261,12 @@ void NewOrder::postOn(QJsonObject json)
     request->setHeader(QNetworkRequest::ContentTypeHeader, "application/json"); //上面语句固定这么写，要不然会报错“contest—type is missing”
     //request.setRawHeader("XXX3", "XXX4");
 
-    QString url = QString("http://") + config.ip + ':' + QString::number(config.serverPort) + QString("/neworder");
+    QString Ptype;
+    if(isInNewOrder)
+        Ptype=QString("/neworder");
+    else
+        Ptype=QString("/changeorder");
+    QString url = QString("http://") + config.ip + ':' + QString::number(config.serverPort) + Ptype;
     request->setUrl(QUrl(url));
 
     manager->post(*request, data);
@@ -208,19 +279,15 @@ void NewOrder::postOn(QJsonObject json)
 void NewOrder::finishPost(QNetworkReply* reply)
 {
     if (reply->error() == QNetworkReply::NoError) {
-        QMessageBox::information(nullptr, QString("完成"), QString("发起订单成功"));
+        if(isInNewOrder)
+            QMessageBox::information(nullptr, QString("完成"), QString("发起订单成功"));
+        else
+            QMessageBox::information(nullptr, QString("完成"), QString("修改订单成功"));
         reply->deleteLater();
         this->close();
     } else {
-        QMessageBox::warning(nullptr, QString("错误"), QString("发起订单失败"));
+        QMessageBox::warning(nullptr, QString("错误"), QString("失败，请稍后重试"));
         reply->deleteLater();
     }
 }
-
-void NewOrder::on_cancel_clicked()
-{
-    QMessageBox::StandardButton result = QMessageBox::question(nullptr, QString("确定？"), QString("是否放弃本订单"));
-    if (result == QMessageBox::Yes)
-        this->close();
-    return;
-}
+/*-------上传函数end-------*/

@@ -6,15 +6,37 @@ PaperTable::PaperTable(QWidget* parent)
     , ui(new Ui::PaperTable)
 {
     ui->setupUi(this);
-    onePageRows = 10;
+    onePageRows = config.TableOnePageRows;
     orders = nullptr;
+    onwhich = 0;
     ui->dateEnd->setDate(QDate::currentDate());
+    connect(this, &PaperTable::finishFlush, this, &PaperTable::afterFlush);
     clear();
 }
 
 PaperTable::~PaperTable()
 {
     delete ui;
+}
+
+int PaperTable::getCurrentID()
+{
+    int row=ui->Table->currentRow();
+    QString nums=ui->Table->item(row,0)->text();
+    return nums.toInt();
+}
+QSet<int> PaperTable::getCurrentIDs()
+{
+    QSet<int> vecItemIndex;//保存选中行的索引
+    QItemSelectionModel *selections = ui->Table->selectionModel(); //返回当前的选择模式
+    QModelIndexList selectedsList = selections->selectedRows(); //返回所有选定的模型项目索引列表
+    for (int i = 0; i < selectedsList.count(); i++)
+    {
+        int row=selectedsList.at(i).row();
+        QString nums=ui->Table->item(row,0)->text();
+        vecItemIndex.insert(nums.toInt());
+    }
+    return vecItemIndex;
 }
 
 void PaperTable::clear()
@@ -33,20 +55,21 @@ void PaperTable::setTitles(QStringList sl)
     ui->Table->setColumnCount(colCnt);
     ui->Table->setHorizontalHeaderLabels(sl);
 }
-
-void PaperTable::setOrderVec(QVector<OneOrder>* _orders)
+void PaperTable::setOrderTitle()
 {
-    this->clear();
-    orders = _orders;
     QStringList sl;
     sl << QString("编号") << QString("发起日期") << QString("使用班级") << QString("车间") << QString("状态")
        << QString("备注") << QString("所含物品") << QString("教师") << QString("车间主任") << QString("实习科长")
        << QString("仓库管理员") << QString("会计");
-    rowCnt = orders->size();
     setTitles(sl);
+}
+void PaperTable::setOrderVec(QVector<OneOrder>* _orders)
+{
+    this->clear();
+    orders = _orders;
+    rowCnt = orders->size();
+    setOrderTitle();
     turnToPage(1);
-    int page = (rowCnt - 1) / onePageRows + 1;
-    ui->lablePaperSum->setText(QString("共") + QString::number(page) + QString("页"));
     if (orders == &historys)
         onwhich = ONHistory;
     else if (orders == &noworders)
@@ -61,13 +84,22 @@ bool PaperTable::turnToPage(int index)
         rowCnt = orders->size();
     else
         return false;
-    if (rowCnt <= 0 || index <= 0 || (rowCnt - 1) / onePageRows + 1 < index)
+    if (rowCnt == 0) {
+        ui->Table->clearContents();
+        currentPage = 1;
+        ui->editPaper->setText(QString::number(currentPage));
+        int pageCnt = 1;
+        ui->lablePaperSum->setText(QString("共") + QString::number(pageCnt) + QString("页"));
+        return true;
+    }
+    if (rowCnt < 0 || index <= 0 || (rowCnt - 1) / onePageRows + 1 < index)
         return false;
     index--;
     int st = index * onePageRows;
     int ed = qMin(index * onePageRows + 9, rowCnt - 1);
     if (ed < st)
         return false;
+    ui->Table->clearContents();
     ui->Table->setRowCount(ed - st + 1);
     QTableWidgetItem* witem;
     for (int i = 0; i < ed - st + 1; i++) {
@@ -103,6 +135,9 @@ bool PaperTable::turnToPage(int index)
         ui->Table->item(k, 11)->setText(order->accountant);
     }
     currentPage = index + 1;
+    ui->editPaper->setText(QString::number(currentPage));
+    int pageCnt = (rowCnt - 1) / onePageRows + 1;
+    ui->lablePaperSum->setText(QString("共") + QString::number(pageCnt) + QString("页"));
     return true;
 }
 
@@ -116,11 +151,36 @@ void PaperTable::on_buttonJumpTo_clicked()
 {
     int page = ui->editPaper->text().toInt();
     turnToPage(page);
-    ui->editPaper->setText(QString::number(currentPage));
 }
 
 void PaperTable::on_buttonNextPaper_clicked()
 {
     turnToPage(currentPage + 1);
-    ui->editPaper->setText(QString::number(currentPage));
+}
+
+void PaperTable::on_buttonFlush_clicked()
+{
+    ui->buttonFlush->setEnabled(false);
+    QDate start = ui->dateStart->date();
+    QDate end = ui->dateEnd->date();
+    flushDealOrders(start, end);
+    flushNowOrders(start, end);
+    //TODO 历史订单时间刷新待写
+    emit finishFlush();
+}
+
+void PaperTable::afterFlush()
+{
+    turnToPage(1);
+    ui->buttonFlush->setEnabled(true);
+}
+
+void PaperTable::on_Table_cellDoubleClicked(int row, int column)
+{
+    QString nums=ui->Table->item(row,0)->text();
+    int id=nums.toInt();
+    OneOrder order=*getOrder(id);
+    NewOrder* newOrder = new NewOrder();
+    newOrder->showOrder(order);
+    newOrder->show();
 }

@@ -33,6 +33,16 @@ int main(int argc, char* argv[])
 {
     QApplication a(argc, argv);
 
+    QFile file(":/text/style.qss");
+    if( file.open(QFile::ReadOnly))
+    {
+        QString styleSheet = QLatin1String(file.readAll());
+
+        a.setStyleSheet(styleSheet);
+        file.close();
+
+    }
+
     Login* login = new Login();
     login->show();
     MainWindow w;

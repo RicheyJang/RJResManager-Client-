@@ -56,8 +56,6 @@ void Login::finishTrylogin(QNetworkReply* reply)
 {
     int state = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).value<int>();
     if (state == 200) {
-        //QByteArray byte_array = reply->readAll();
-        //QString str(byte_array);
         QJsonParseError jsonError;
         QJsonDocument document = QJsonDocument::fromJson(reply->readAll(), &jsonError);
         QJsonObject json;
@@ -90,22 +88,25 @@ void Login::finishTrylogin(QNetworkReply* reply)
                 thisUser.id = json.value("id").toInt();
             else
                 flag = 0;
-            if (json.contains("truename"))
-                thisUser.truename = json.value("truename").toString();
-            else
-                flag = 0;
-            if (json.contains("workshop"))
-                thisUser.workshop = json.value("workshop").toString();
-            else
-                flag = 0;
-            if (json.contains("storehouse"))
-                thisUser.storehouse = json.value("storehouse").toString();
-            else
-                flag = 0;
             if (json.contains("identity"))
                 thisUser.identity = json.value("identity").toString();
             else
                 flag = 0;
+        }
+        if (flag != 0) {
+            flag = 0;
+            Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+            QSqlDatabase database = base->getDatabase();
+            QSqlQuery query(database);
+            query.exec("select truename,workshop,storehouse from user where id=" + QString::number(thisUser.id) + ";");
+            while (query.next()) {
+                thisUser.truename = query.value(0).toString();
+                thisUser.workshop = query.value(1).toString();
+                thisUser.storehouse = query.value(2).toString();
+                flag = 1;
+            }
+            base->close();
+            delete base;
         }
         if (flag)
             emit succsesslogin();
@@ -162,7 +163,7 @@ void Login::whenWrongpassword()
     ui->statusLable->setStyleSheet("color:red");
 }
 
-void Login::allInit()
+void Login::allInit() //全局初始化
 {
     ui->progressBar->show();
     ui->progressBar->setRange(0, 100);
@@ -185,6 +186,12 @@ void Login::allInit()
         return;
     }
     ui->progressBar->setValue(60);
+    if (!initSatus()) {
+        QMessageBox::warning(nullptr, QString("警告"), QString("连接数据库出错\nInitItems wrong!"));
+        ui->progressBar->hide();
+        return;
+    }
+    ui->progressBar->setValue(80);
     emit allSuccess();
     this->hide();
 }

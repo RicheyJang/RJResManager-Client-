@@ -21,12 +21,25 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_newOrder_clicked();
     void initMainWindow();
+
+    void on_newOrder_clicked();
+    void on_showDeal_clicked();
+    void on_showNow_clicked();
+
+    void changeThisOrder();
+    void agreeHeader();
+    void disagreeHeader();
+
+    void finishPost(QNetworkReply* reply);
 
 private:
     Login* login;
     Ui::MainWindow* ui;
+    QPushButton* dealButton[10]={nullptr};
+    void setDealButton();
+    bool changeStatus(int orderID,QString toStatus);
+    void postOn(QJsonObject json);
 };
 
 #ifndef ISMAINCPP

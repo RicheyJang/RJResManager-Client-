@@ -12,12 +12,12 @@ private:
     QString host, databaseName, userName, password;
     int port;
     bool canUse = false;
+
+public:
     inline bool check()
     {
         return canUse;
     }
-
-public:
     Database(QString _host, int _port, QString _databaseName, QString _userName, QString _password)
         : host(_host)
         , databaseName(_databaseName)
@@ -36,7 +36,7 @@ public:
         indatabase.setPassword(password); //这里输入你的密码
         if (!indatabase.open()) {
             canUse = false;
-            QMessageBox::information(nullptr, QString("warning"), QString("载入数据库失败"));
+            //QMessageBox::information(nullptr, QString("warning"), QString("载入数据库失败"));
             return;
         }
         canUse = true;
