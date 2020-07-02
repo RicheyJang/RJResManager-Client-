@@ -21,19 +21,21 @@ PaperTable::~PaperTable()
 
 int PaperTable::getCurrentID()
 {
-    int row=ui->Table->currentRow();
-    QString nums=ui->Table->item(row,0)->text();
+    int row = ui->Table->currentRow();
+    QTableWidgetItem* item = ui->Table->item(row, 0);
+    if (item == nullptr)
+        return 0;
+    QString nums = item->text();
     return nums.toInt();
 }
 QSet<int> PaperTable::getCurrentIDs()
 {
-    QSet<int> vecItemIndex;//保存选中行的索引
-    QItemSelectionModel *selections = ui->Table->selectionModel(); //返回当前的选择模式
+    QSet<int> vecItemIndex; //保存选中行的索引
+    QItemSelectionModel* selections = ui->Table->selectionModel(); //返回当前的选择模式
     QModelIndexList selectedsList = selections->selectedRows(); //返回所有选定的模型项目索引列表
-    for (int i = 0; i < selectedsList.count(); i++)
-    {
-        int row=selectedsList.at(i).row();
-        QString nums=ui->Table->item(row,0)->text();
+    for (int i = 0; i < selectedsList.count(); i++) {
+        int row = selectedsList.at(i).row();
+        QString nums = ui->Table->item(row, 0)->text();
         vecItemIndex.insert(nums.toInt());
     }
     return vecItemIndex;
@@ -126,7 +128,10 @@ bool PaperTable::turnToPage(int index)
                 continue;
             s = s + type->name + "(" + type->type + ") ";
         }
-        s = s + QString("等");
+        if (order->items.size() == 0)
+            s = QString("无物品");
+        else
+            s = s + QString("等");
         ui->Table->item(k, 6)->setText(s);
         ui->Table->item(k, 7)->setText(order->teacher);
         ui->Table->item(k, 8)->setText(order->header);
@@ -177,9 +182,10 @@ void PaperTable::afterFlush()
 
 void PaperTable::on_Table_cellDoubleClicked(int row, int column)
 {
-    QString nums=ui->Table->item(row,0)->text();
-    int id=nums.toInt();
-    OneOrder order=*getOrder(id);
+    int id = getCurrentID();
+    if (id == 0)
+        return;
+    OneOrder order = *getOrder(id);
     NewOrder* newOrder = new NewOrder();
     newOrder->showOrder(order);
     newOrder->show();

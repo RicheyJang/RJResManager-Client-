@@ -9,6 +9,8 @@ NewOrder::NewOrder(QWidget* parent)
     setAttribute(Qt::WA_QuitOnClose, false);
     setAttribute(Qt::WA_DeleteOnClose, true);
     setWindowTitle(QString("发起新订单"));
+    QString wkshop = QString("所用车间：") + thisUser.workshop;
+    ui->workshopLabel->setText(wkshop);
     isInNewOrder = true;
     ui->itemTable->setColumnCount(6);
     QStringList titles;
@@ -29,6 +31,9 @@ void NewOrder::setOrder(OneOrder order)
     }
     ui->classEdit->setText(order.useclass);
     ui->moreEdit->setText(order.more);
+    QString wkshop = QString("所用车间：") + order.workshop;
+    ui->workshopLabel->clear();
+    ui->workshopLabel->setText(wkshop);
 }
 
 void NewOrder::setModel(OneOrder order)
@@ -41,14 +46,14 @@ void NewOrder::changeOrder(OneOrder* order) //修改订单 窗口
     isInNewOrder = false;
     theOrder = order;
     setOrder(*order);
-    QString title=QString("修改订单 编号：")+QString::number(order->id);
+    QString title = QString("修改订单 编号：") + QString::number(order->id);
     setWindowTitle(title);
 }
 
 void NewOrder::showOrder(OneOrder order) //展示订单 窗口
 {
     isInNewOrder = false;
-    QLayoutItem *child;
+    QLayoutItem* child;
     while ((child = ui->Layout_add->itemAt(0)) != nullptr) {
         ui->Layout_add->removeItem(child);
         delete child->widget();
@@ -70,9 +75,8 @@ void NewOrder::showOrder(OneOrder order) //展示订单 窗口
     ui->classEdit->setReadOnly(true);
     ui->moreEdit->setReadOnly(true);
     setOrder(order);
-    QString title=QString("当前订单 编号：")+QString::number(order.id);
+    QString title = QString("当前订单 编号：") + QString::number(order.id);
     setWindowTitle(title);
-
 }
 
 /*----------辅助函数--------------*/
@@ -162,12 +166,12 @@ void NewOrder::on_addItem_clicked()
 
 void NewOrder::on_changeItem_clicked()
 {
-    int row=ui->itemTable->currentRow();
-    QString res=ui->itemTable->item(row, 1)->text();
-    QString name=ui->itemTable->item(row, 2)->text();
-    QString type=ui->itemTable->item(row, 3)->text();
+    int row = ui->itemTable->currentRow();
+    QString res = ui->itemTable->item(row, 1)->text();
+    QString name = ui->itemTable->item(row, 2)->text();
+    QString type = ui->itemTable->item(row, 3)->text();
     QString num = ui->itemTable->item(row, 4)->text().split(" ")[0];
-    QString more=ui->itemTable->item(row, 5)->text();
+    QString more = ui->itemTable->item(row, 5)->text();
     ui->resBox->setCurrentText(res);
     ui->nameBox->setCurrentText(name);
     ui->typeBox->setCurrentText(type);
@@ -213,12 +217,14 @@ void NewOrder::on_confirm_clicked()
     userInf.insert("username", thisUser.username);
     userInf.insert("password", thisUser.password);
 
-    if(!isInNewOrder)
-        orderInf.insert("id", QJsonValue( theOrder->id ));
+    if (!isInNewOrder)
+        orderInf.insert("id", QJsonValue(theOrder->id));
     orderInf.insert("useclass", QJsonValue(ui->classEdit->text()));
-    if(isInNewOrder)
+    if (isInNewOrder)
         orderInf.insert("starttime", QJsonValue(QDate::currentDate().toString("yyyy-MM-dd")));
     orderInf.insert("more", QJsonValue(ui->moreEdit->toPlainText()));
+    //WARNING 订单所属车间的添加 暂未考虑教师的多身份性
+    orderInf.insert("workshop", QJsonValue(thisUser.workshop));
 
     QJsonArray items;
     int row = ui->itemTable->rowCount();
@@ -231,6 +237,12 @@ void NewOrder::on_confirm_clicked()
         //qDebug() << item.value("cnt");
         items.append(QJsonValue(item));
     }
+    if (row == 0) {
+        QMessageBox::StandardButton result = QMessageBox::question(nullptr, QString("确定？"), QString("订单物品栏为空，确定继续？"));
+        if (result != QMessageBox::Yes)
+            return;
+    }
+
     json.insert("userInformation", QJsonValue(userInf));
     json.insert("orderInformation", QJsonValue(orderInf));
     json.insert("itemsInformation", QJsonValue(items));
@@ -262,10 +274,10 @@ void NewOrder::postOn(QJsonObject json)
     //request.setRawHeader("XXX3", "XXX4");
 
     QString Ptype;
-    if(isInNewOrder)
-        Ptype=QString("/neworder");
+    if (isInNewOrder)
+        Ptype = QString("/neworder");
     else
-        Ptype=QString("/changeorder");
+        Ptype = QString("/changeorder");
     QString url = QString("http://") + config.ip + ':' + QString::number(config.serverPort) + Ptype;
     request->setUrl(QUrl(url));
 
@@ -279,7 +291,7 @@ void NewOrder::postOn(QJsonObject json)
 void NewOrder::finishPost(QNetworkReply* reply)
 {
     if (reply->error() == QNetworkReply::NoError) {
-        if(isInNewOrder)
+        if (isInNewOrder)
             QMessageBox::information(nullptr, QString("完成"), QString("发起订单成功"));
         else
             QMessageBox::information(nullptr, QString("完成"), QString("修改订单成功"));

@@ -28,17 +28,24 @@ private slots:
     void on_showNow_clicked();
 
     void changeThisOrder();
+    bool changeToByID(QString dowhat, int i);
+    void agreeTeacher();
+    void disagreeTeacher();
     void agreeHeader();
     void disagreeHeader();
+    void agreeAdmin();
+    void disagreeAdmin();
+    void agreeKeeper();
+    void disagreeKeeper();
 
     void finishPost(QNetworkReply* reply);
 
 private:
     Login* login;
     Ui::MainWindow* ui;
-    QPushButton* dealButton[10]={nullptr};
+    QPushButton* dealButton[10] = { nullptr };
     void setDealButton();
-    bool changeStatus(int orderID,QString toStatus);
+    bool changeStatus(int orderID, QString toStatus);
     void postOn(QJsonObject json);
 };
 

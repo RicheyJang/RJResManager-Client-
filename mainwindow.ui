@@ -97,18 +97,48 @@
      <height>26</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menutest">
+   <widget class="QMenu" name="store">
     <property name="title">
-     <string>test</string>
+     <string>仓库</string>
     </property>
-    <addaction name="actionone"/>
+    <addaction name="store_showAll"/>
    </widget>
-   <addaction name="menutest"/>
+   <widget class="QMenu" name="people">
+    <property name="title">
+     <string>人员</string>
+    </property>
+    <addaction name="people_change"/>
+   </widget>
+   <widget class="QMenu" name="about">
+    <property name="title">
+     <string>关于</string>
+    </property>
+    <addaction name="about_me"/>
+    <addaction name="about_writer"/>
+   </widget>
+   <addaction name="store"/>
+   <addaction name="people"/>
+   <addaction name="about"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionone">
+  <action name="store_showAll">
    <property name="text">
-    <string>one</string>
+    <string>查看库存</string>
+   </property>
+  </action>
+  <action name="people_change">
+   <property name="text">
+    <string>人员管理</string>
+   </property>
+  </action>
+  <action name="about_me">
+   <property name="text">
+    <string>关于我</string>
+   </property>
+  </action>
+  <action name="about_writer">
+   <property name="text">
+    <string>关于作者</string>
    </property>
   </action>
  </widget>

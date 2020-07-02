@@ -149,6 +149,9 @@
    </item>
    <item row="1" column="0" colspan="9">
     <widget class="QTableWidget" name="Table">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
      <property name="selectionBehavior">
       <enum>QAbstractItemView::SelectRows</enum>
      </property>

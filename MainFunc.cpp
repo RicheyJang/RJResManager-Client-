@@ -4,27 +4,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-bool initItems()
-{
-    allType.clear();
-    Database base(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-    QSqlDatabase database = base.getDatabase();
-    QSqlQuery query(database);
-    query.exec("select * from allitems;");
-    while (query.next()) {
-        OneType atype;
-        atype.pid = query.value(0).toInt();
-        atype.res = query.value(1).toString();
-        atype.name = query.value(2).toString();
-        atype.type = query.value(3).toString();
-        atype.units = query.value(4).toString();
-        atype.cnt = query.value(5).toDouble();
-        addType(atype, false);
-    }
-    base.close();
-    return true;
-}
-
+/*-----------sql查询相关------------------*/
 QString getOrderSql(int onwhich)
 {
     QString sql = "";
@@ -39,21 +19,28 @@ QString getOrderSql(int onwhich)
                 return nullptr;
         }
         query.exec("select status from authority where " + iden + "=1 or " + iden + "=3;");
-        if (onwhich == ONDealOrder)
+        QString idCheck, statusCheck = "";
+        if (onwhich == ONDealOrder) {
             //TODO 待处理订单的人员检查
-            sql = " false";
-        else {
-            QString iden = " ( " + thisUser.identity + "='" + thisUser.truename + "' ";
-            QString teacher = " teacher='" + thisUser.truename + "' ) ";
-            sql = iden + "or" + teacher;
+            idCheck = "( true )";
+            if (thisUser.identity == QString("teacher"))
+                idCheck = "( teacher='" + thisUser.truename + "' )";
+            if (thisUser.identity == QString("header"))
+                idCheck = "( workshop='" + thisUser.workshop + "' )";
+        } else {
+            QString iden = thisUser.identity + "='" + thisUser.truename + "'";
+            QString teacher = "teacher='" + thisUser.truename + "'";
+            idCheck = " ( " + iden + " or " + teacher + " ) ";
         }
         while (query.next()) {
             if (onwhich == ONDealOrder)
-                sql = sql + " or status='" + query.value(0).toString() + "'";
+                statusCheck = statusCheck + " or status='" + query.value(0).toString() + "'";
             else
-                sql = sql + " and status!='" + query.value(0).toString() + "'";
+                statusCheck = statusCheck + "and status!='" + query.value(0).toString() + "' ";
         }
-        sql.append(' ');
+        statusCheck.remove(0, 3);
+        statusCheck = " ( " + statusCheck + " ) ";
+        sql = idCheck + " and " + statusCheck;
         base->close();
         delete base;
     } else if (onwhich == ONHistory) {
@@ -75,12 +62,12 @@ bool formOrders(QString whereSql, QVector<OneOrder>& orders)
 {
     orders.clear();
     Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-    if(!base->check())
+    if (!base->check())
         return false;
     QSqlDatabase database = base->getDatabase();
     QSqlQuery query(database);
     QSqlQuery itemQuery(database);
-    if(!query.exec("select id,workshop,useclass,starttime,usetime,more,teacher,header,admin,keeper,accountant,status from orders where" + whereSql + ";"))
+    if (!query.exec("select id,workshop,useclass,starttime,usetime,more,teacher,header,admin,keeper,accountant,status from orders where" + whereSql + ";"))
         return false;
     while (query.next()) {
         OneOrder* order = new OneOrder;
@@ -109,70 +96,99 @@ bool formOrders(QString whereSql, QVector<OneOrder>& orders)
     }
     base->close();
     delete base;
-    std::sort(orders.begin(),orders.end());
+    std::sort(orders.begin(), orders.end());
     return true;
 }
+/*-----------sql查询相关end---------------*/
+
+/*--------------初始化相关---------------*/
+bool initItems()
+{
+    allType.clear();
+    Database base(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+    QSqlDatabase database = base.getDatabase();
+    QSqlQuery query(database);
+    query.exec("select pid,res,name,type,units,cnt from allitems;");
+    while (query.next()) {
+        OneType atype;
+        atype.pid = query.value(0).toInt();
+        atype.res = query.value(1).toString();
+        atype.name = query.value(2).toString();
+        atype.type = query.value(3).toString();
+        atype.units = query.value(4).toString();
+        atype.cnt = query.value(5).toDouble();
+        addType(atype, false);
+    }
+    base.close();
+    return true;
+}
+
 bool initDealOrders()
 {
     QString sql = getOrderSql(ONDealOrder);
     return formOrders(sql, dealorders);
 }
-bool flushDealOrders(QDate start, QDate end)
-{
-    QString sql = getOrderSql(ONDealOrder, start, end);
-    bool res=formOrders(sql, dealorders);
-    return res;
-}
+
 bool initNowOrders()
 {
     QString sql = getOrderSql(ONNowOrder);
     return formOrders(sql, noworders);
 }
-bool flushNowOrders(QDate start, QDate end)
-{
-    QString sql = getOrderSql(ONNowOrder, start, end);
-    bool res=formOrders(sql, noworders);
-    return res;
-}
+
 bool initSatus()
 {
     Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-    if(!base->check())
+    if (!base->check())
         return false;
     QSqlDatabase database = base->getDatabase();
     QSqlQuery query(database);
-    if(!query.exec("select status from authority;"))
+    if (!query.exec("select status from authority;"))
         return false;
     config.statusList.clear();
-    config.statusList<<QString("");
+    config.statusList << QString("0");
     while (query.next()) {
-        QString now=query.value(0).toString();
-        config.statusList<<now;
+        QString now = query.value(0).toString();
+        config.statusList << now;
     }
     base->close();
     delete base;
     return true;
 }
-OneOrder* getOrder(int id)
+/*--------------初始化相关end------------*/
+
+/*--------------功能函数-----------------*/
+uint qHash(const OneType key) //物品set的哈希映射
+{
+    return uint(key.pid);
+}
+
+bool flushDealOrders(QDate start, QDate end) //刷新待处理订单
+{
+    QString sql = getOrderSql(ONDealOrder, start, end);
+    bool res = formOrders(sql, dealorders);
+    return res;
+}
+bool flushNowOrders(QDate start, QDate end) //刷新当前订单
+{
+    QString sql = getOrderSql(ONNowOrder, start, end);
+    bool res = formOrders(sql, noworders);
+    return res;
+}
+
+OneOrder* getOrder(int id) //按id查找订单order
 {
     OneOrder order;
-    order.id=id;
-    QVector<OneOrder>::iterator it=std::lower_bound(noworders.begin(),noworders.end(),order);
-    if(it==noworders.end() || it->id!=id)
-    {
-        it=std::lower_bound(dealorders.begin(),dealorders.end(),order);
-        if(it==dealorders.end() || it->id!=id)
+    order.id = id;
+    QVector<OneOrder>::iterator it = std::lower_bound(noworders.begin(), noworders.end(), order);
+    if (it == noworders.end() || it->id != id) {
+        it = std::lower_bound(dealorders.begin(), dealorders.end(), order);
+        if (it == dealorders.end() || it->id != id)
             return nullptr;
     }
     return &(*it);
 }
-//TODO 按照时间范围更新当前订单及待处理订单，重写getOrderSql即可
 
-uint qHash(const OneType key)
-{
-    return uint(key.pid);
-}
-bool hasType(QString res, QString name, QString type)
+bool hasType(QString res, QString name, QString type) //判断是否含有该物品
 {
     for (OneType atype : allType) {
         if (atype.res.compare(res) == 0 && atype.name.compare(name) == 0 && atype.type.compare(type) == 0)
@@ -180,7 +196,8 @@ bool hasType(QString res, QString name, QString type)
     }
     return false;
 }
-int getTypePid(QString res, QString name, QString type)
+
+int getTypePid(QString res, QString name, QString type) //获取物品的pid
 {
     for (OneType atype : allType) {
         if (atype.res.compare(res) == 0 && atype.name.compare(name) == 0 && atype.type.compare(type) == 0)
@@ -188,7 +205,8 @@ int getTypePid(QString res, QString name, QString type)
     }
     return 0;
 }
-const OneType* getType(int pid)
+
+const OneType* getType(int pid) //按pid获取到物品
 {
     OneType type;
     type.pid = pid;
@@ -197,7 +215,7 @@ const OneType* getType(int pid)
         return nullptr;
     return &(*it);
 }
-QString getUnits(QString res, QString name, QString type)
+QString getUnits(QString res, QString name, QString type) //获取物品的单位
 {
     for (OneType atype : allType) {
         if (atype.res.compare(res) == 0 && atype.name.compare(name) == 0 && atype.type.compare(type) == 0)
@@ -205,7 +223,7 @@ QString getUnits(QString res, QString name, QString type)
     }
     return nullptr;
 }
-void addType(OneType atype, bool forCheck = false)
+void addType(OneType atype, bool forCheck = false) //添加物品
 {
     if (forCheck == true) {
         if (hasType(atype.res, atype.name, atype.type))
@@ -213,7 +231,7 @@ void addType(OneType atype, bool forCheck = false)
     }
     allType.insert(atype);
 }
-bool regCheck(QString reg, QString s)
+bool regCheck(QString reg, QString s) //正则表达式格式化检查 用于检查用户名和密码格式
 {
     QRegExp rx(reg);
     QRegExpValidator v(rx);
@@ -222,7 +240,9 @@ bool regCheck(QString reg, QString s)
         return true;
     return false;
 }
+/*--------------功能函数end--------------*/
 
+/*--------安全相关----------------*/
 QString toSHA256(QString s)
 {
     QByteArray qb = QCryptographicHash::hash(s.toUtf8(), QCryptographicHash::Sha256);
@@ -247,7 +267,9 @@ QString toSHA256(QString s)
     }
     return res;
 }
+/*--------安全相关end-------------*/
 
+/*----------配置文件相关-----------*/
 Config::Config(QString file)
 {
     //TODO 配置文件待实现
@@ -257,7 +279,8 @@ Config::Config(QString file)
     dataPort = 3306;
     UserAgent = "ResClient";
     basename = "finaltest";
-    statusList<<QString("")
-        <<QString("待一级审核")<<QString("一审不通过")<<QString("待二级审核")<<QString("二审不通过")
-               <<QString("审核通过(待出库)")<<QString("已出库")<<QString("仓库无法完成")<<QString("已完成");
+    statusList << QString("")
+               << QString("待一级审核") << QString("一审不通过") << QString("待二级审核") << QString("二审不通过")
+               << QString("审核通过(待出库)") << QString("已出库") << QString("仓库无法完成") << QString("已完成");
 }
+/*----------配置文件相关end---------*/

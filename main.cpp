@@ -9,7 +9,7 @@ QVector<OneOrder> dealorders;
 QVector<OneOrder> noworders;
 QVector<OneOrder> historys;
 User thisUser;
-Config config("");
+Config config("./config.ini");
 
 /*
 int main(int argc, char* argv[])
@@ -34,13 +34,11 @@ int main(int argc, char* argv[])
     QApplication a(argc, argv);
 
     QFile file(":/text/style.qss");
-    if( file.open(QFile::ReadOnly))
-    {
+    if (file.open(QFile::ReadOnly)) {
         QString styleSheet = QLatin1String(file.readAll());
 
         a.setStyleSheet(styleSheet);
         file.close();
-
     }
 
     Login* login = new Login();

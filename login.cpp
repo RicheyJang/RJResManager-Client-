@@ -68,6 +68,10 @@ void Login::finishTrylogin(QNetworkReply* reply)
                     flag = 0;
             } else
                 flag = 0;
+            if (json.contains("id"))
+                thisUser.id = json.value("id").toInt();
+            else
+                flag = 0;
             if (json.contains("username"))
                 thisUser.username = json.value("username").toString();
             else
@@ -76,20 +80,16 @@ void Login::finishTrylogin(QNetworkReply* reply)
                 thisUser.password = json.value("password").toString();
             else
                 flag = 0;
+            if (json.contains("identity"))
+                thisUser.identity = json.value("identity").toString();
+            else
+                flag = 0;
             if (json.contains("useName"))
                 thisUser.useName = json.value("useName").toString();
             else
                 flag = 0;
             if (json.contains("usePassword"))
                 thisUser.usePassword = json.value("usePassword").toString();
-            else
-                flag = 0;
-            if (json.contains("id"))
-                thisUser.id = json.value("id").toInt();
-            else
-                flag = 0;
-            if (json.contains("identity"))
-                thisUser.identity = json.value("identity").toString();
             else
                 flag = 0;
         }
@@ -168,6 +168,10 @@ void Login::allInit() //全局初始化
     ui->progressBar->show();
     ui->progressBar->setRange(0, 100);
     ui->progressBar->setValue(0);
+    if (ui->asTeacher->isChecked() && !ui->asManager->isChecked()) {
+        if (thisUser.identity != QString("keeper") && thisUser.identity != QString("accountant"))
+            thisUser.identity = QString("teacher");
+    }
     if (!initItems()) {
         QMessageBox::warning(nullptr, QString("警告"), QString("连接数据库出错\nInitItems wrong!"));
         ui->progressBar->hide();
@@ -175,19 +179,19 @@ void Login::allInit() //全局初始化
     }
     ui->progressBar->setValue(20);
     if (!initDealOrders()) {
-        QMessageBox::warning(nullptr, QString("警告"), QString("连接数据库出错\nInitItems wrong!"));
+        QMessageBox::warning(nullptr, QString("警告"), QString("连接数据库出错\nInitDealOrders wrong!"));
         ui->progressBar->hide();
         return;
     }
     ui->progressBar->setValue(40);
     if (!initNowOrders()) {
-        QMessageBox::warning(nullptr, QString("警告"), QString("连接数据库出错\nInitItems wrong!"));
+        QMessageBox::warning(nullptr, QString("警告"), QString("连接数据库出错\nInitNowOrders wrong!"));
         ui->progressBar->hide();
         return;
     }
     ui->progressBar->setValue(60);
     if (!initSatus()) {
-        QMessageBox::warning(nullptr, QString("警告"), QString("连接数据库出错\nInitItems wrong!"));
+        QMessageBox::warning(nullptr, QString("警告"), QString("连接数据库出错\nInitSatus wrong!"));
         ui->progressBar->hide();
         return;
     }
