@@ -2,4 +2,5 @@
     <qresource prefix="/text">
         <file>style.qss</file>
     </qresource>
+    <qresource prefix="/image"/>
 </RCC>

@@ -44,8 +44,13 @@ QString getOrderSql(int onwhich)
         base->close();
         delete base;
     } else if (onwhich == ONHistory) {
-        sql = " false ";
-        //TODO 历史订单查询sql待写
+        if (thisUser.identity != QString("teacher")) {
+            QString iden = thisUser.identity + "='" + thisUser.truename + "'";
+            QString teacher = "teacher='" + thisUser.truename + "'";
+            sql = " " + iden + " or " + teacher + " ";
+        } else {
+            sql = " teacher='" + thisUser.truename + "' ";
+        }
     } else {
         sql = " false ";
     }
@@ -56,9 +61,11 @@ QString getOrderSql(int onwhich, QDate start, QDate end)
     QString pre = getOrderSql(onwhich);
     end = end.addDays(1);
     QString after = " starttime between '" + start.toString("yyyy-MM-dd") + "' and '" + end.toString("yyyy-MM-dd") + "' ";
+    if (onwhich == ONHistory)
+        return QString(" (" + pre + ") and (" + after + ") limit ") + QString::number(config.MaxHistoryOrders);
     return QString(" (" + pre + ") and (" + after + ") ");
 }
-bool formOrders(QString whereSql, QVector<OneOrder>& orders)
+bool formOrders(QString MainSql, QString itemMainSql, QString whereSql, QVector<OneOrder>& orders)
 {
     orders.clear();
     Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
@@ -67,7 +74,13 @@ bool formOrders(QString whereSql, QVector<OneOrder>& orders)
     QSqlDatabase database = base->getDatabase();
     QSqlQuery query(database);
     QSqlQuery itemQuery(database);
-    if (!query.exec("select id,workshop,useclass,starttime,usetime,more,teacher,header,admin,keeper,accountant,status from orders where" + whereSql + ";"))
+    if (MainSql == nullptr)
+        MainSql = "select id,workshop,useclass,starttime,usetime,more,teacher,header,admin,keeper,accountant,status from orders";
+    if (itemMainSql == nullptr)
+        itemMainSql = "select pid,cnt,status,more from orderitems";
+    QString sql = MainSql + " where " + whereSql + ";";
+    //qDebug() << sql;
+    if (!query.exec(sql))
         return false;
     while (query.next()) {
         OneOrder* order = new OneOrder;
@@ -83,7 +96,9 @@ bool formOrders(QString whereSql, QVector<OneOrder>& orders)
         order->keeper = query.value(9).toString();
         order->accountant = query.value(10).toString();
         order->status = query.value(11).toString();
-        itemQuery.exec("select pid,cnt,status,more from orderitems where orderid=" + QString::number(order->id));
+        sql = itemMainSql + " where orderid=" + QString::number(order->id);
+        //qDebug() << sql;
+        itemQuery.exec(sql);
         while (itemQuery.next()) {
             OneItem item;
             item.pid = itemQuery.value(0).toInt();
@@ -126,13 +141,13 @@ bool initItems()
 bool initDealOrders()
 {
     QString sql = getOrderSql(ONDealOrder);
-    return formOrders(sql, dealorders);
+    return formOrders(nullptr, nullptr, sql, dealorders);
 }
 
 bool initNowOrders()
 {
     QString sql = getOrderSql(ONNowOrder);
-    return formOrders(sql, noworders);
+    return formOrders(nullptr, nullptr, sql, noworders);
 }
 
 bool initSatus()
@@ -165,25 +180,32 @@ uint qHash(const OneType key) //物品set的哈希映射
 bool flushDealOrders(QDate start, QDate end) //刷新待处理订单
 {
     QString sql = getOrderSql(ONDealOrder, start, end);
-    bool res = formOrders(sql, dealorders);
+    bool res = formOrders(nullptr, nullptr, sql, dealorders);
     return res;
 }
 bool flushNowOrders(QDate start, QDate end) //刷新当前订单
 {
     QString sql = getOrderSql(ONNowOrder, start, end);
-    bool res = formOrders(sql, noworders);
+    bool res = formOrders(nullptr, nullptr, sql, noworders);
     return res;
 }
 
-OneOrder* getOrder(int id) //按id查找订单order
+bool flushHistoryOrders(QDate start, QDate end) //刷新历史订单
+{
+    QString whereSql = getOrderSql(ONHistory, start, end);
+    QString MainSql = "select id,workshop,useclass,starttime,usetime,more,teacher,header,admin,keeper,accountant,status from historyorder ";
+    QString itemMainSql = "select pid,cnt,status,more from historyitems";
+    bool res = formOrders(MainSql, itemMainSql, whereSql, historys);
+    return res;
+}
+
+OneOrder* getOrder(int id, QVector<OneOrder>& orders) //按id查找订单order
 {
     OneOrder order;
     order.id = id;
-    QVector<OneOrder>::iterator it = std::lower_bound(noworders.begin(), noworders.end(), order);
+    QVector<OneOrder>::iterator it = std::lower_bound(orders.begin(), orders.end(), order);
     if (it == noworders.end() || it->id != id) {
-        it = std::lower_bound(dealorders.begin(), dealorders.end(), order);
-        if (it == dealorders.end() || it->id != id)
-            return nullptr;
+        return nullptr;
     }
     return &(*it);
 }
@@ -240,6 +262,19 @@ bool regCheck(QString reg, QString s) //正则表达式格式化检查 用于检
         return true;
     return false;
 }
+bool orderCheck(OneOrder order)
+{
+    initItems();
+    std::unordered_map<int, double> mp;
+    for (OneItem item : order.items) {
+        mp[item.pid] = mp[item.pid] + item.number;
+    }
+    for (auto num : mp) {
+        if ((getType(num.first)->cnt) < num.second)
+            return false;
+    }
+    return true;
+}
 /*--------------功能函数end--------------*/
 
 /*--------安全相关----------------*/
@@ -277,10 +312,14 @@ Config::Config(QString file)
     ip = "127.0.0.1";
     serverPort = 2333;
     dataPort = 3306;
+    MaxHistoryOrders = 100;
     UserAgent = "ResClient";
     basename = "finaltest";
     statusList << QString("")
                << QString("待一级审核") << QString("一审不通过") << QString("待二级审核") << QString("二审不通过")
                << QString("审核通过(待出库)") << QString("已出库") << QString("仓库无法完成") << QString("已完成");
+    itemsList << QString("耗材类") << QString("租赁类");
+    itemStartWith[0] = '1';
+    itemStartWith[1] = '2';
 }
 /*----------配置文件相关end---------*/

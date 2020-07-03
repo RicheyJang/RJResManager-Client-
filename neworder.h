@@ -18,6 +18,8 @@ public:
     void setModel(OneOrder order); //作为模板，新建订单（新建id）
     void showOrder(OneOrder order);
     ~NewOrder();
+signals:
+    void finishChange();
 
 private slots:
     void finishPost(QNetworkReply*);

@@ -8,7 +8,7 @@ PaperTable::PaperTable(QWidget* parent)
     ui->setupUi(this);
     onePageRows = config.TableOnePageRows;
     orders = nullptr;
-    onwhich = 0;
+    onwhich = ONDealOrder;
     ui->dateEnd->setDate(QDate::currentDate());
     connect(this, &PaperTable::finishFlush, this, &PaperTable::afterFlush);
     clear();
@@ -19,6 +19,7 @@ PaperTable::~PaperTable()
     delete ui;
 }
 
+/*-------外界函数-----------*/
 int PaperTable::getCurrentID()
 {
     int row = ui->Table->currentRow();
@@ -40,7 +41,6 @@ QSet<int> PaperTable::getCurrentIDs()
     }
     return vecItemIndex;
 }
-
 void PaperTable::clear()
 {
     ui->Table->clear();
@@ -51,33 +51,47 @@ void PaperTable::clear()
     ui->editPaper->setText(QString::number(1));
     ui->lablePaperSum->setText(QString("共1页"));
 }
-void PaperTable::setTitles(QStringList sl)
-{
-    colCnt = sl.count();
-    ui->Table->setColumnCount(colCnt);
-    ui->Table->setHorizontalHeaderLabels(sl);
-}
-void PaperTable::setOrderTitle()
-{
-    QStringList sl;
-    sl << QString("编号") << QString("发起日期") << QString("使用班级") << QString("车间") << QString("状态")
-       << QString("备注") << QString("所含物品") << QString("教师") << QString("车间主任") << QString("实习科长")
-       << QString("仓库管理员") << QString("会计");
-    setTitles(sl);
-}
 void PaperTable::setOrderVec(QVector<OneOrder>* _orders)
 {
     this->clear();
     orders = _orders;
     rowCnt = orders->size();
     setOrderTitle();
-    turnToPage(1);
     if (orders == &historys)
         onwhich = ONHistory;
     else if (orders == &noworders)
         onwhich = ONNowOrder;
     else
         onwhich = ONDealOrder;
+    currentPage = 1;
+    on_buttonFlush_clicked();
+}
+void PaperTable::setOrderTitle()
+{
+    QStringList sl;
+    sl << QString("编号") << QString("发起日期") << QString("使用班级") << QString("车间") << QString("状态")
+       << QString("备注") << QString("所含物品") << QString("教师") << QString("车间主任") << QString("实习科长")
+       << QString("仓库管理员");
+    setTitles(sl);
+}
+void PaperTable::flush()
+{
+    on_buttonFlush_clicked();
+}
+/*-------外界函数end---------*/
+
+/*-------表格整理函数-----------*/
+void PaperTable::setTitles(QStringList sl)
+{
+    colCnt = sl.count();
+    ui->Table->setColumnCount(colCnt);
+    ui->Table->setHorizontalHeaderLabels(sl);
+}
+
+void PaperTable::afterFlush()
+{
+    turnToPage(currentPage);
+    ui->buttonFlush->setEnabled(true);
 }
 
 bool PaperTable::turnToPage(int index)
@@ -137,7 +151,6 @@ bool PaperTable::turnToPage(int index)
         ui->Table->item(k, 8)->setText(order->header);
         ui->Table->item(k, 9)->setText(order->admin);
         ui->Table->item(k, 10)->setText(order->keeper);
-        ui->Table->item(k, 11)->setText(order->accountant);
     }
     currentPage = index + 1;
     ui->editPaper->setText(QString::number(currentPage));
@@ -145,7 +158,9 @@ bool PaperTable::turnToPage(int index)
     ui->lablePaperSum->setText(QString("共") + QString::number(pageCnt) + QString("页"));
     return true;
 }
+/*-------表格整理函数end---------*/
 
+/*-------按钮响应函数------------*/
 void PaperTable::on_buttonLastPaper_clicked()
 {
     turnToPage(currentPage - 1);
@@ -168,16 +183,13 @@ void PaperTable::on_buttonFlush_clicked()
     ui->buttonFlush->setEnabled(false);
     QDate start = ui->dateStart->date();
     QDate end = ui->dateEnd->date();
-    flushDealOrders(start, end);
-    flushNowOrders(start, end);
-    //TODO 历史订单时间刷新待写
+    if (onwhich == ONNowOrder)
+        flushNowOrders(start, end);
+    else if (onwhich == ONHistory)
+        flushHistoryOrders(start, end);
+    else
+        flushDealOrders(start, end);
     emit finishFlush();
-}
-
-void PaperTable::afterFlush()
-{
-    turnToPage(1);
-    ui->buttonFlush->setEnabled(true);
 }
 
 void PaperTable::on_Table_cellDoubleClicked(int row, int column)
@@ -185,8 +197,15 @@ void PaperTable::on_Table_cellDoubleClicked(int row, int column)
     int id = getCurrentID();
     if (id == 0)
         return;
-    OneOrder order = *getOrder(id);
+    OneOrder* order = getOrder(id, dealorders);
+    if (order == nullptr)
+        order = getOrder(id, noworders);
+    if (order == nullptr)
+        order = getOrder(id, historys);
+    if (order == nullptr)
+        return;
     NewOrder* newOrder = new NewOrder();
-    newOrder->showOrder(order);
+    newOrder->showOrder(*order);
     newOrder->show();
 }
+/*-------按钮响应函数end----------*/

@@ -35,9 +35,10 @@
 #include <QSet>
 #include <QTableWidget>
 #include <QTableWidgetItem>
-#include <QtAlgorithms>
 #include <QVector>
+#include <QtAlgorithms>
 #include <qmath.h>
+#include <unordered_map>
 /*----头文件结束---*/
 
 /*----结构声明-----*/
@@ -46,9 +47,12 @@ public:
     QString ip;
     int serverPort;
     int dataPort;
+    int MaxHistoryOrders;
     QString UserAgent;
     QString basename;
     QStringList statusList;
+    QStringList itemsList;
+    char itemStartWith[5];
 
     int TableOnePageRows;
     Config(QString file);
@@ -112,6 +116,13 @@ public:
     QString useName;
     QString usePassword;
     QString identity;
+    QString trueIdentity;
+    bool isUseful;
+    char m_padding[3];
+    bool operator<(const User a) const
+    {
+        return id < a.id;
+    }
 };
 /*--结构声明结束---*/
 
@@ -133,13 +144,15 @@ bool initNowOrders();
 bool initSatus();
 bool flushDealOrders(QDate start, QDate end);
 bool flushNowOrders(QDate start, QDate end);
+bool flushHistoryOrders(QDate start, QDate end);
 void addType(OneType atype, bool forCheck);
 bool hasType(QString res, QString name, QString type);
-OneOrder* getOrder(int id);
+OneOrder* getOrder(int id, QVector<OneOrder>& orders);
 const OneType* getType(int pid);
 int getTypePid(QString res, QString name, QString type);
 QString getUnits(QString res, QString name, QString type);
 bool regCheck(QString reg, QString s);
+bool orderCheck(OneOrder order);
 QString toSHA256(QString s);
 /*函数定义结束*/
 

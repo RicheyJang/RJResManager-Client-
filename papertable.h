@@ -20,6 +20,7 @@ public:
     void setOrderVec(QVector<OneOrder>* _orders);
     void clear();
     void setTitles(QStringList);
+    void flush();
     int getCurrentID();
     QSet<int> getCurrentIDs();
 

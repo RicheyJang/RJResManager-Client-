@@ -297,6 +297,7 @@ void NewOrder::finishPost(QNetworkReply* reply)
             QMessageBox::information(nullptr, QString("完成"), QString("修改订单成功"));
         reply->deleteLater();
         this->close();
+        emit finishChange();
     } else {
         QMessageBox::warning(nullptr, QString("错误"), QString("失败，请稍后重试"));
         reply->deleteLater();

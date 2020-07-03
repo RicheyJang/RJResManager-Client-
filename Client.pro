@@ -19,26 +19,32 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     MainFunc.cpp \
     hintcombobox.cpp \
+    itemsmanager.cpp \
     login.cpp \
     main.cpp \
     mainwindow.cpp \
     newOrder.cpp \
-    papertable.cpp
+    papertable.cpp \
+    usermanager.cpp
 
 HEADERS += \
     QDBC.h \
     hintcombobox.h \
+    itemsmanager.h \
     login.h \
     maininclude.h \
     mainwindow.h \
     neworder.h \
-    papertable.h
+    papertable.h \
+    usermanager.h
 
 FORMS += \
+    itemsmanager.ui \
     login.ui \
     mainwindow.ui \
     neworder.ui \
-    papertable.ui
+    papertable.ui \
+    usermanager.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

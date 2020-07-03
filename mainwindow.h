@@ -1,9 +1,11 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "itemsmanager.h"
 #include "login.h"
 #include "maininclude.h"
 #include "neworder.h"
+#include "usermanager.h"
 #include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
@@ -28,6 +30,7 @@ private slots:
     void on_showNow_clicked();
 
     void changeThisOrder();
+    void afterChange();
     bool changeToByID(QString dowhat, int i);
     void agreeTeacher();
     void disagreeTeacher();
@@ -37,16 +40,30 @@ private slots:
     void disagreeAdmin();
     void agreeKeeper();
     void disagreeKeeper();
+    void againOrder();
 
     void finishPost(QNetworkReply* reply);
+
+    void on_about_me_triggered();
+
+    void on_about_writer_triggered();
+
+    void on_store_showAll_triggered();
+
+    void on_showHistory_clicked();
+
+    void on_people_change_triggered();
 
 private:
     Login* login;
     Ui::MainWindow* ui;
     QPushButton* dealButton[10] = { nullptr };
     void setDealButton();
+    void setNowButton();
+    void setHistoryButton();
     bool changeStatus(int orderID, QString toStatus);
-    void postOn(QJsonObject json);
+    bool finishOrder(int orderID);
+    void postOn(QJsonObject json, QString uri);
 };
 
 #ifndef ISMAINCPP
