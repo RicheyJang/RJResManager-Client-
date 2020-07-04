@@ -305,16 +305,36 @@ QString toSHA256(QString s)
 /*--------安全相关end-------------*/
 
 /*----------配置文件相关-----------*/
-Config::Config(QString file)
+Config::Config(QString filename)
 {
-    //TODO 配置文件待实现
-    TableOnePageRows = 10;
-    ip = "127.0.0.1";
-    serverPort = 2333;
-    dataPort = 3306;
-    MaxHistoryOrders = 100;
+    QSettings* ini = new QSettings(filename, QSettings::IniFormat);
+
+    ip = ini->value("server/ip", "127.0.0.1").toString();
+    serverPort = ini->value("server/serverPort", 2333).toInt();
+    dataPort = ini->value("server/dataPort", 3306).toInt();
+    basename = ini->value("server/basename", "finaltest").toString();
+    MaxHistoryOrders = ini->value("client/MaxHistoryOrders", 100).toInt();
+    TableOnePageRows = ini->value("client/TableOnePageRows", 10).toInt();
+    QString date = ini->value("client/orderStartDay", "2020/01/01").toString();
+    orderStartDay = QDate::fromString(date, "yyyy/MM/dd");
+
+    if (!ini->contains("server/ip"))
+        ini->setValue("server/ip", "127.0.0.1");
+    if (!ini->contains("server/serverPort"))
+        ini->setValue("server/serverPort", 2333);
+    if (!ini->contains("server/dataPort"))
+        ini->setValue("server/dataPort", 3306);
+    if (!ini->contains("server/basename"))
+        ini->setValue("server/basename", "finaltest");
+    if (!ini->contains("client/MaxHistoryOrders"))
+        ini->setValue("client/MaxHistoryOrders", 100);
+    if (!ini->contains("client/TableOnePageRows"))
+        ini->setValue("client/TableOnePageRows", 10);
+    if (!ini->contains("client/orderStartDay"))
+        ini->setValue("client/orderStartDay", "2020/01/01");
+
     UserAgent = "ResClient";
-    basename = "finaltest";
+    nowClientVersion = "0.0.2";
     statusList << QString("")
                << QString("待一级审核") << QString("一审不通过") << QString("待二级审核") << QString("二审不通过")
                << QString("审核通过(待出库)") << QString("已出库") << QString("仓库无法完成") << QString("已完成");

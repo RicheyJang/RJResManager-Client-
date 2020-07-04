@@ -6,9 +6,13 @@ PaperTable::PaperTable(QWidget* parent)
     , ui(new Ui::PaperTable)
 {
     ui->setupUi(this);
+    orderSL << QString("编号") << QString("发起日期") << QString("使用班级") << QString("所属车间") << QString("状态")
+            << QString("备注") << QString("所含物品") << QString("教师") << QString("车间主任") << QString("实习科长")
+            << QString("仓库管理员");
     onePageRows = config.TableOnePageRows;
     orders = nullptr;
     onwhich = ONDealOrder;
+    ui->dateStart->setDate(config.orderStartDay);
     ui->dateEnd->setDate(QDate::currentDate());
     connect(this, &PaperTable::finishFlush, this, &PaperTable::afterFlush);
     clear();
@@ -68,11 +72,7 @@ void PaperTable::setOrderVec(QVector<OneOrder>* _orders)
 }
 void PaperTable::setOrderTitle()
 {
-    QStringList sl;
-    sl << QString("编号") << QString("发起日期") << QString("使用班级") << QString("车间") << QString("状态")
-       << QString("备注") << QString("所含物品") << QString("教师") << QString("车间主任") << QString("实习科长")
-       << QString("仓库管理员");
-    setTitles(sl);
+    setTitles(orderSL);
 }
 void PaperTable::flush()
 {
@@ -91,6 +91,7 @@ void PaperTable::setTitles(QStringList sl)
 void PaperTable::afterFlush()
 {
     turnToPage(currentPage);
+    ui->buttonFlush->setDisabled(false);
     ui->buttonFlush->setEnabled(true);
 }
 
@@ -102,6 +103,7 @@ bool PaperTable::turnToPage(int index)
         return false;
     if (rowCnt == 0) {
         ui->Table->clearContents();
+        ui->Table->setRowCount(0);
         currentPage = 1;
         ui->editPaper->setText(QString::number(currentPage));
         int pageCnt = 1;
@@ -180,7 +182,7 @@ void PaperTable::on_buttonNextPaper_clicked()
 
 void PaperTable::on_buttonFlush_clicked()
 {
-    ui->buttonFlush->setEnabled(false);
+    ui->buttonFlush->setDisabled(true);
     QDate start = ui->dateStart->date();
     QDate end = ui->dateEnd->date();
     if (onwhich == ONNowOrder)

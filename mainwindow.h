@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "aboutme.h"
 #include "itemsmanager.h"
 #include "login.h"
 #include "maininclude.h"

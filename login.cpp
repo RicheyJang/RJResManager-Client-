@@ -14,6 +14,7 @@ Login::Login(QWidget* parent)
     ui->progressBar->hide();
 
     connect(this, &Login::succsesslogin, this, &Login::whenSuccesslogin);
+    connect(this, &Login::hasNewVersion, this, &Login::whenHasNewVersion);
     connect(this, &Login::faillogin, this, &Login::whenFaillogin);
     connect(this, &Login::wrongpassword, this, &Login::whenWrongpassword);
 }
@@ -59,6 +60,7 @@ void Login::finishTrylogin(QNetworkReply* reply)
         QJsonParseError jsonError;
         QJsonDocument document = QJsonDocument::fromJson(reply->readAll(), &jsonError);
         QJsonObject json;
+        QString newClientVersion = config.nowClientVersion;
         bool flag = 0;
         if (!document.isNull() && document.isObject() && jsonError.error == QJsonParseError::NoError) {
             json = document.object();
@@ -81,10 +83,10 @@ void Login::finishTrylogin(QNetworkReply* reply)
             else
                 flag = 0;
             if (json.contains("identity"))
-                thisUser.identity = json.value("identity").toString();
+                thisUser.trueIdentity = json.value("identity").toString();
             else
                 flag = 0;
-            thisUser.trueIdentity = thisUser.identity;
+            thisUser.identity = thisUser.trueIdentity;
             if (json.contains("useName"))
                 thisUser.useName = json.value("useName").toString();
             else
@@ -93,6 +95,8 @@ void Login::finishTrylogin(QNetworkReply* reply)
                 thisUser.usePassword = json.value("usePassword").toString();
             else
                 flag = 0;
+            if (json.contains("newClientVersion"))
+                newClientVersion = json.value("newClientVersion").toString();
         }
         if (flag != 0) {
             flag = 0;
@@ -109,13 +113,15 @@ void Login::finishTrylogin(QNetworkReply* reply)
             base->close();
             delete base;
         }
-        if (flag)
-            emit succsesslogin();
-        else
+        if (flag) {
+            if (newClientVersion != config.nowClientVersion)
+                emit hasNewVersion();
+            else
+                emit succsesslogin();
+        } else
             emit faillogin();
     } else if (state == 403) {
         emit wrongpassword();
-
     } else {
         emit faillogin();
     }
@@ -152,6 +158,18 @@ void Login::whenSuccesslogin()
     ui->statusLable->setText(QString("登录成功"));
     ui->statusLable->setStyleSheet("color:green");
     allInit();
+}
+void Login::whenHasNewVersion()
+{
+    QString url = "http://" + config.ip + ":" + QString::number(config.serverPort) + "/download" + "/RJ-setup-latest.exe";
+    ui->statusLable->setOpenExternalLinks(true);
+    ui->statusLable->setStyleSheet("color:black");
+    QString here = "<a href=\"" + url + QString("\">这里</a>");
+    QString text = QString("有新版本！点击") + here + QString("下载");
+    ui->statusLable->setText(text);
+    ui->checkIn->setDisabled(true);
+    //TODO 下载新版本download待写
+    //ui->statusLable->setText(QString("下载新版本中，下载完成后请删除老版本"));
 }
 void Login::whenFaillogin()
 {
@@ -199,4 +217,15 @@ void Login::allInit() //全局初始化
     ui->progressBar->setValue(100);
     emit allSuccess();
     this->hide();
+}
+
+void Login::download(QString url)
+{
+    QStringList list = url.split("/");
+    QString filename = QDir::currentPath() + "/" + list.at(list.length() - 1);
+    QFile* file = new QFile(filename);
+    if (!file->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        QMessageBox::warning(this, "warning", "打开失败");
+        return;
+    }
 }

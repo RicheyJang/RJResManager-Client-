@@ -21,18 +21,21 @@ signals:
     void wrongpassword();
     void suddenClose();
     void allSuccess();
+    void hasNewVersion();
 
 private slots:
     void on_checkIn_clicked();
     void closeEvent(QCloseEvent* event) override;
     void finishTrylogin(QNetworkReply* reply);
     void whenSuccesslogin();
+    void whenHasNewVersion();
     void whenFaillogin();
     void whenWrongpassword();
 
 private:
     void allInit();
     int trylogin(QString name, QString password);
+    void download(QString url);
     Ui::Login* ui;
     QNetworkAccessManager* manager;
     QNetworkRequest* request;

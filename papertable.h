@@ -48,6 +48,7 @@ private:
     int onePageRows;
     Ui::PaperTable* ui;
     QVector<OneOrder>* orders;
+    QStringList orderSL;
     //TODO 搜索模块待实现
 };
 

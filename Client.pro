@@ -18,6 +18,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     MainFunc.cpp \
+    aboutme.cpp \
     hintcombobox.cpp \
     itemsmanager.cpp \
     login.cpp \
@@ -29,6 +30,7 @@ SOURCES += \
 
 HEADERS += \
     QDBC.h \
+    aboutme.h \
     hintcombobox.h \
     itemsmanager.h \
     login.h \
@@ -39,6 +41,7 @@ HEADERS += \
     usermanager.h
 
 FORMS += \
+    aboutme.ui \
     itemsmanager.ui \
     login.ui \
     mainwindow.ui \

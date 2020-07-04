@@ -16,7 +16,9 @@
 #include <QCompleter>
 #include <QDebug>
 #include <QDialog>
+#include <QDir>
 #include <QEvent>
+#include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -33,6 +35,7 @@
 #include <QRegExp>
 #include <QRegExpValidator>
 #include <QSet>
+#include <QSettings>
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QVector>
@@ -52,7 +55,9 @@ public:
     QString basename;
     QStringList statusList;
     QStringList itemsList;
+    QString nowClientVersion;
     char itemStartWith[5];
+    QDate orderStartDay;
 
     int TableOnePageRows;
     Config(QString file);

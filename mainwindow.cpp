@@ -353,11 +353,13 @@ void MainWindow::finishPost(QNetworkReply* reply)
 /*-----------菜单栏-----------------*/
 void MainWindow::on_about_me_triggered()
 {
+    AboutMe* am = new AboutMe();
+    am->show();
 }
 
 void MainWindow::on_about_writer_triggered()
 {
-    QString text = QString("RJ仓库管理系统\n\t作者：姜雨奇\n\t院校：HUST");
+    QString text = QString("RJ仓库管理系统 v") + config.nowClientVersion + QString("\n\t作者：姜雨奇\n\t院校：HUST");
     QMessageBox::information(nullptr, QString("关于本软件"), text);
 }
 
