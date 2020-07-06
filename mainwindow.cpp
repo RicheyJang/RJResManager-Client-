@@ -141,7 +141,7 @@ void MainWindow::setDealButton()
         connect(dealButton[3], &QPushButton::clicked, this, &MainWindow::disagreeTeacher);
         num = 3;
     } else if (thisUser.identity == QString("header")) {
-        dealButton[1] = new QPushButton(QString("同意"));
+        dealButton[1] = new QPushButton(QString("提交二审"));
         connect(dealButton[1], &QPushButton::clicked, this, &MainWindow::agreeHeader);
         dealButton[2] = new QPushButton(QString("修改"));
         connect(dealButton[2], &QPushButton::clicked, this, &MainWindow::changeThisOrder);
@@ -149,7 +149,7 @@ void MainWindow::setDealButton()
         connect(dealButton[3], &QPushButton::clicked, this, &MainWindow::disagreeHeader);
         num = 3;
     } else if (thisUser.identity == QString("admin")) {
-        dealButton[1] = new QPushButton(QString("同意"));
+        dealButton[1] = new QPushButton(QString("允许出库"));
         connect(dealButton[1], &QPushButton::clicked, this, &MainWindow::agreeAdmin);
         dealButton[2] = new QPushButton(QString("修改"));
         connect(dealButton[2], &QPushButton::clicked, this, &MainWindow::changeThisOrder);
