@@ -334,7 +334,7 @@ Config::Config(QString filename)
         ini->setValue("client/orderStartDay", "2020/01/01");
 
     UserAgent = "ResClient";
-    nowClientVersion = "0.0.2";
+    nowClientVersion = "0.0.1";
     statusList << QString("")
                << QString("待一级审核") << QString("一审不通过") << QString("待二级审核") << QString("二审不通过")
                << QString("审核通过(待出库)") << QString("已出库") << QString("仓库无法完成") << QString("已完成");

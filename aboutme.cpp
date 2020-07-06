@@ -54,12 +54,14 @@ void AboutMe::on_conferm_clicked()
             QMessageBox::warning(nullptr, QString("抱歉"), QString("您不具有教师权限"));
         } else {
             thisUser.identity = QString("teacher");
+            emit needFlushMain();
         }
     } else if (ui->radio_admin->isChecked()) {
         if (thisUser.trueIdentity == QString("teacher")) {
             QMessageBox::warning(nullptr, QString("抱歉"), QString("您不具有管理员权限"));
         } else {
             thisUser.identity = thisUser.trueIdentity;
+            emit needFlushMain();
         }
     }
     this->close();

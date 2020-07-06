@@ -20,16 +20,29 @@ void MainWindow::setLoginWindow(Login* _login)
     connect(_login, &Login::suddenClose, this, &MainWindow::close);
 }
 
+void MainWindow::flushMainWindow()
+{
+    if (thisUser.identity != QString("admin") && thisUser.identity != QString("keeper") && thisUser.identity != QString("accountant"))
+        ui->store->menuAction()->setVisible(false);
+    else
+        ui->store->menuAction()->setVisible(true);
+    if (thisUser.identity != QString("admin"))
+        ui->people->menuAction()->setVisible(false);
+    else
+        ui->people->menuAction()->setVisible(true);
+    if (thisUser.identity != QString("teacher"))
+        ui->newOrder->setDisabled(true);
+    else
+        ui->newOrder->setDisabled(false);
+    on_showDeal_clicked();
+}
+
 void MainWindow::initMainWindow()
 {
     ui->orderTable->setOrderTitle();
     for (int i = 0; i < 10; i++)
         dealButton[i] = nullptr;
-    if (thisUser.identity != QString("admin") && thisUser.identity != QString("keeper") && thisUser.identity != QString("accountant"))
-        ui->store->menuAction()->setVisible(false);
-    if (thisUser.identity != QString("admin"))
-        ui->people->menuAction()->setVisible(false);
-    //ui->menutest->menuAction()->setVisible(false); //菜单栏某一菜单的隐藏
+    flushMainWindow();
     on_showDeal_clicked();
     this->show();
 }
@@ -267,7 +280,22 @@ void MainWindow::agreeKeeper()
 }
 void MainWindow::disagreeKeeper()
 {
-    changeToByID(QString("无法完成"), 6);
+    int id = ui->orderTable->getCurrentID();
+    if (id == 0)
+        return;
+    OneOrder* order = getOrder(id, dealorders);
+    if (order == nullptr) {
+        QMessageBox::warning(nullptr, QString("错误"), QString("失败，请稍后重试"));
+        return;
+    }
+    if (order->status != config.statusList[5]) {
+        QMessageBox::warning(nullptr, QString("错误"), QString("此类订单无法驳回"));
+        return;
+    }
+    QString ask = QString("确定无法完成该订单(编号为%1)吗？").arg(id);
+    if (!askForConferm(ask))
+        return;
+    changeStatus(id, config.statusList[6]);
 }
 void MainWindow::agreeTeacher()
 {
@@ -354,12 +382,15 @@ void MainWindow::finishPost(QNetworkReply* reply)
 void MainWindow::on_about_me_triggered()
 {
     AboutMe* am = new AboutMe();
+    connect(am, &AboutMe::needFlushMain, this, &MainWindow::flushMainWindow);
     am->show();
 }
 
 void MainWindow::on_about_writer_triggered()
 {
-    QString text = QString("RJ仓库管理系统 v") + config.nowClientVersion + QString("\n\t作者：姜雨奇\n\t院校：HUST");
+    QString emailA = QString("richeyjang@163.com");
+    QString text = QString("RJ仓库管理系统 v") + config.nowClientVersion
+        + QString("\n反馈：") + emailA + QString("\n\t作者：姜雨奇\n\t院校：HUST");
     QMessageBox::information(nullptr, QString("关于本软件"), text);
 }
 

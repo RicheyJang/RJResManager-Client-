@@ -14,6 +14,8 @@ class AboutMe : public QWidget {
 public:
     explicit AboutMe(QWidget* parent = nullptr);
     ~AboutMe();
+signals:
+    void needFlushMain();
 
 private slots:
     void on_conferm_clicked();

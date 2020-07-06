@@ -25,6 +25,7 @@ public:
 
 private slots:
     void initMainWindow();
+    void flushMainWindow();
 
     void on_newOrder_clicked();
     void on_showDeal_clicked();
@@ -44,15 +45,10 @@ private slots:
     void againOrder();
 
     void finishPost(QNetworkReply* reply);
-
     void on_about_me_triggered();
-
     void on_about_writer_triggered();
-
     void on_store_showAll_triggered();
-
     void on_showHistory_clicked();
-
     void on_people_change_triggered();
 
 private:
