@@ -4,7 +4,7 @@
 #include "mainwindow.h"
 #include <QApplication>
 
-QSet<OneResItem> allResItem;
+//QSet<OneResItem> allResItem;
 ResItemsTrie resItemsTrie;
 QVector<OneOrder> dealorders;
 QVector<OneOrder> noworders;

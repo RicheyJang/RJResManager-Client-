@@ -89,11 +89,11 @@ void NewOrder::addOneItem(OneItem item)
     ui->itemTable->setRowCount(row + 1);
     QTableWidgetItem* pid = new QTableWidgetItem(QString::number(item.pid));
     ui->itemTable->setItem(row, 0, pid);
-    const OneResItem* tmp = getResItem(item.pid);
-    QTableWidgetItem* res = new QTableWidgetItem(tmp->res);
-    QTableWidgetItem* name = new QTableWidgetItem(tmp->name);
-    QTableWidgetItem* type = new QTableWidgetItem(tmp->type);
-    QString u = QString::number(item.number) + " " + tmp->units;
+    OneResItem tmp = getResItem(item.pid);
+    QTableWidgetItem* res = new QTableWidgetItem(tmp.res);
+    QTableWidgetItem* name = new QTableWidgetItem(tmp.name);
+    QTableWidgetItem* type = new QTableWidgetItem(tmp.type);
+    QString u = QString::number(item.number) + " " + tmp.units;
     QTableWidgetItem* num = new QTableWidgetItem(u);
     QTableWidgetItem* more = new QTableWidgetItem(item.more);
     pid->setFlags(pid->flags() & (~Qt::ItemIsEditable));

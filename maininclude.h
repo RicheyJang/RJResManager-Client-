@@ -80,7 +80,7 @@ public:
     QString name;
     QString type;
     QString units;
-    const OneResItem* p;
+    int padding;
     QHash<QString, int> mp;
     bool operator<(const OneResItem a) const
     {
@@ -92,16 +92,20 @@ public:
     }
 };
 uint qHash(const OneResItem key);
+
 class ResItemsTrie {
     int itemsSum;
+    QHash<int, int> pidToNode;
 
 public:
     QVector<OneResItem> nodes;
     ResItemsTrie();
     void clear();
-    bool insert(const OneResItem* item);
-    const OneResItem* find(QString res, QString name, QString type);
+    bool insert(OneResItem item);
+    OneResItem find(int pid);
+    OneResItem find(QString res, QString name, QString type);
 };
+
 struct OneItem {
 public:
     int pid;
@@ -156,7 +160,7 @@ extern QVector<OneOrder> dealorders;
 extern QVector<OneOrder> noworders;
 extern QVector<OneOrder> historys;
 extern QVector<OneOrder> newitems;
-extern QSet<OneResItem> allResItem;
+//extern QSet<OneResItem> allResItem;
 extern User thisUser;
 extern Config config;
 extern ResItemsTrie resItemsTrie;
@@ -177,7 +181,8 @@ OneOrder* getOrder(int id, QVector<OneOrder>& orders);
 bool initResItems();
 void addResItem(OneResItem atype, bool forCheck);
 bool hasResItem(QString res, QString name, QString type);
-const OneResItem* getResItem(int pid);
+//const OneResItem* getResItem(int pid);
+OneResItem getResItem(int pid);
 int getResItemPid(QString res, QString name, QString type);
 QString getUnits(QString res, QString name, QString type);
 QStringList getResList();

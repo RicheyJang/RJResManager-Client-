@@ -139,10 +139,10 @@ bool PaperTable::turnToPage(int index)
         ui->Table->item(k, 5)->setText(order->more);
         QString s = "";
         for (int j = 0; j < qMin(3, order->items.size()); j++) {
-            const OneResItem* type = getResItem(order->items.at(j).pid);
-            if (type == nullptr)
+            OneResItem type = getResItem(order->items.at(j).pid);
+            if (type.pid == 0)
                 continue;
-            s = s + type->name + "(" + type->type + ") ";
+            s = s + type.name + "(" + type.type + ") ";
         }
         if (order->items.size() == 0)
             s = QString("无物品");

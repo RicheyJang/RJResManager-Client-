@@ -224,7 +224,7 @@ uint qHash(const OneResItem key) //物品set的哈希映射
 
 bool initResItems()
 {
-    allResItem.clear();
+    //allResItem.clear();
     resItemsTrie.clear();
     Database base(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
     QSqlDatabase database = base.getDatabase();
@@ -249,9 +249,9 @@ void addResItem(OneResItem atype, bool forCheck = false) //添加物品
         if (hasResItem(atype.res, atype.name, atype.type))
             return;
     }
-    QSet<OneResItem>::iterator it = allResItem.insert(atype);
-    const OneResItem* ret = (&(*it));
-    resItemsTrie.insert(ret);
+    //QSet<OneResItem>::iterator it = allResItem.insert(atype);
+    //const OneResItem* ret = (&(*it));
+    resItemsTrie.insert(atype);
 }
 bool hasResItem(QString res, QString name, QString type) //判断是否含有该物品
 {
@@ -260,7 +260,7 @@ bool hasResItem(QString res, QString name, QString type) //判断是否含有该
             return true;
     }
     return false;*/
-    return resItemsTrie.find(res, name, type) != nullptr;
+    return resItemsTrie.find(res, name, type).pid != 0;
 }
 int getResItemPid(QString res, QString name, QString type) //获取物品的pid
 {
@@ -269,19 +269,12 @@ int getResItemPid(QString res, QString name, QString type) //获取物品的pid
             return atype.pid;
     }
     return 0;*/
-    const OneResItem* tmp = resItemsTrie.find(res, name, type);
-    if (tmp == nullptr)
-        return 0;
-    return tmp->pid;
+    OneResItem tmp = resItemsTrie.find(res, name, type);
+    return tmp.pid;
 }
-const OneResItem* getResItem(int pid) //按pid获取到物品
+OneResItem getResItem(int pid) //按pid获取到物品
 {
-    OneResItem type;
-    type.pid = pid;
-    QSet<OneResItem>::iterator it = allResItem.find(type);
-    if (it == allResItem.end())
-        return nullptr;
-    return &(*it);
+    return resItemsTrie.find(pid);
 }
 QString getUnits(QString res, QString name, QString type) //获取物品的单位
 {
@@ -290,10 +283,10 @@ QString getUnits(QString res, QString name, QString type) //获取物品的单�
             return atype.units;
     }
     return nullptr;*/
-    const OneResItem* tmp = resItemsTrie.find(res, name, type);
-    if (tmp == nullptr)
+    OneResItem tmp = resItemsTrie.find(res, name, type);
+    if (tmp.pid == 0)
         return nullptr;
-    return tmp->units;
+    return tmp.units;
 }
 QStringList getResList()
 {
@@ -325,19 +318,18 @@ QStringList getTypeList(QString res, QString name)
 }
 QSet<OneResItem> getResItemsByRes(QString res)
 {
-    if (config.itemsList.size() < 1)
-        return QSet<OneResItem>();
-    char start = '0';
-    int i = 0;
-    for (QString tmp : config.itemsList) {
-        if (tmp == res)
-            start = config.itemStartWith[i];
-        i++;
-    }
     QSet<OneResItem> st;
-    for (OneResItem item : allResItem) {
-        if (QString::number(item.pid).at(0).toLatin1() == start) {
-            st.insert(item);
+    int nodeidRes = 0, nodeidName, nodeid;
+    QHash<QString, int>::iterator mpitRes, mpitName;
+    mpitRes = resItemsTrie.nodes[0].mp.find(res);
+    if (mpitRes == resItemsTrie.nodes[0].mp.end())
+        return st;
+    nodeidRes = mpitRes.value();
+    for (mpitRes = resItemsTrie.nodes[nodeidRes].mp.begin(); mpitRes != resItemsTrie.nodes[nodeidRes].mp.end(); mpitRes++) {
+        nodeidName = mpitRes.value();
+        for (mpitName = resItemsTrie.nodes[nodeidName].mp.begin(); mpitName != resItemsTrie.nodes[nodeidName].mp.end(); mpitName++) {
+            nodeid = mpitName.value();
+            st.insert(resItemsTrie.nodes[nodeid]);
         }
     }
     return st;
@@ -350,75 +342,80 @@ ResItemsTrie::ResItemsTrie()
 void ResItemsTrie::clear()
 {
     itemsSum = 0;
+    pidToNode.clear();
     nodes.clear();
     OneResItem tmp;
     tmp.pid = 0;
     tmp.mp.clear();
     nodes.push_back(tmp);
 }
-const OneResItem* ResItemsTrie::find(QString res, QString name, QString type)
+OneResItem ResItemsTrie::find(int pid)
+{
+    OneResItem nret;
+    nret.pid = 0;
+    QHash<int, int>::iterator it = pidToNode.find(pid);
+    if (it == pidToNode.end())
+        return nret;
+    return nodes[it.value()];
+}
+OneResItem ResItemsTrie::find(QString res, QString name, QString type)
 {
     int nodeid = 0;
+    OneResItem nret;
+    nret.pid = 0;
     QHash<QString, int>::iterator mpit;
     mpit = nodes[nodeid].mp.find(res);
     if (mpit == nodes[nodeid].mp.end())
-        return nullptr;
+        return nret;
     nodeid = mpit.value();
     mpit = nodes[nodeid].mp.find(name);
     if (mpit == nodes[nodeid].mp.end())
-        return nullptr;
+        return nret;
     nodeid = mpit.value();
     mpit = nodes[nodeid].mp.find(type);
     if (mpit == nodes[nodeid].mp.end())
-        return nullptr;
+        return nret;
     nodeid = mpit.value();
-    return nodes[nodeid].p;
+    return nodes[nodeid];
 }
-bool ResItemsTrie::insert(const OneResItem* item)
+bool ResItemsTrie::insert(OneResItem item)
 {
     int nodeid = 0;
     QHash<QString, int>::iterator mpit;
-    mpit = nodes[nodeid].mp.find(item->res);
+    mpit = nodes[nodeid].mp.find(item.res);
     if (mpit == nodes[nodeid].mp.end()) {
         OneResItem tmp;
         tmp.pid = 1;
-        tmp.res = item->res;
+        tmp.res = item.res;
         tmp.mp.clear();
         itemsSum = nodes.size();
         tmp.nodeid = itemsSum;
         nodes.push_back(tmp);
-        mpit = nodes[nodeid].mp.insert(item->res, tmp.nodeid);
+        mpit = nodes[nodeid].mp.insert(item.res, tmp.nodeid);
     }
     nodeid = mpit.value();
-    mpit = nodes[nodeid].mp.find(item->name);
+    mpit = nodes[nodeid].mp.find(item.name);
     if (mpit == nodes[nodeid].mp.end()) {
         OneResItem tmp;
         tmp.pid = 2;
-        tmp.res = item->res;
-        tmp.name = item->name;
+        tmp.res = item.res;
+        tmp.name = item.name;
         tmp.mp.clear();
         itemsSum = nodes.size();
         tmp.nodeid = itemsSum;
         nodes.push_back(tmp);
-        mpit = nodes[nodeid].mp.insert(item->name, tmp.nodeid);
+        mpit = nodes[nodeid].mp.insert(item.name, tmp.nodeid);
     }
     nodeid = mpit.value();
-    mpit = nodes[nodeid].mp.find(item->type);
+    mpit = nodes[nodeid].mp.find(item.type); //当前认为同res、name、type的物品唯一
     if (mpit == nodes[nodeid].mp.end()) {
-        OneResItem tmp;
-        tmp.pid = 3;
-        tmp.res = item->res;
-        tmp.name = item->name;
-        tmp.type = item->type;
-        tmp.mp.clear();
+        item.mp.clear();
         itemsSum = nodes.size();
-        tmp.nodeid = itemsSum;
-        nodes.push_back(tmp);
-        mpit = nodes[nodeid].mp.insert(item->type, tmp.nodeid);
+        item.nodeid = itemsSum;
+        nodes.push_back(item);
+        mpit = nodes[nodeid].mp.insert(item.type, item.nodeid);
+        pidToNode.insert(item.pid, item.nodeid);
     }
-    nodeid = mpit.value();
-    nodes[nodeid].mp.clear(); //当前认为同res、name、type的物品唯一
-    nodes[nodeid].p = item;
     return true;
 }
 /*----------物品相关函数end----------*/
@@ -441,7 +438,7 @@ bool orderCheck(OneOrder order)
         mp[item.pid] = mp[item.pid] + item.number;
     }
     for (auto num : mp) {
-        if ((getResItem(num.first)->cnt) < num.second)
+        if ((getResItem(num.first).cnt) < num.second)
             return false;
     }
     return true;
