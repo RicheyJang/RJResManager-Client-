@@ -47,7 +47,8 @@ private:
     void setOrder(OneOrder order);
     void postOn(QJsonObject json);
 
-    bool isInNewOrder = true;
+    //bool isInNewOrder = true;
+    int dowhat;
     bool isInAddItem = false;
     OneOrder* theOrder = nullptr;
     QPushButton* confirm;

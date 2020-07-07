@@ -6,10 +6,15 @@
 #define ONDealOrder 11
 #define ONNowOrder 12
 #define ONHistory 13
+#define ONNEWITEMS 15
+#define ONADDNEWORDER 21
+#define ONCHANGEORDER 22
+#define ONSHOWORDER 23
 /*-----宏定义结束---*/
 
 /*----头文件-------*/
 #include "QDBC.h"
+#include <QApplication>
 #include <QByteArray>
 #include <QCloseEvent>
 #include <QComboBox>
@@ -24,6 +29,7 @@
 #include <QJsonObject>
 #include <QJsonParseError>
 #include <QJsonValue>
+#include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
@@ -36,11 +42,14 @@
 #include <QRegExpValidator>
 #include <QSet>
 #include <QSettings>
+#include <QStyle>
 #include <QTableWidget>
 #include <QTableWidgetItem>
+#include <QToolButton>
 #include <QVector>
 #include <QtAlgorithms>
 #include <qmath.h>
+#include <stack>
 #include <unordered_map>
 /*----头文件结束---*/
 
@@ -62,27 +71,37 @@ public:
     int TableOnePageRows;
     Config(QString file);
 };
-struct OneType {
+struct OneResItem {
 public:
     int pid;
+    int nodeid;
+    double cnt;
     QString res;
     QString name;
     QString type;
-    double cnt;
     QString units;
-    int resId;
-    int nameId;
-    int typeId;
-    bool operator<(const OneType a) const
+    const OneResItem* p;
+    QHash<QString, int> mp;
+    bool operator<(const OneResItem a) const
     {
         return pid < a.pid;
     }
-    bool operator==(const OneType a) const
+    bool operator==(const OneResItem a) const
     {
         return pid == a.pid;
     }
 };
-uint qHash(const OneType key);
+uint qHash(const OneResItem key);
+class ResItemsTrie {
+    int itemsSum;
+
+public:
+    QVector<OneResItem> nodes;
+    ResItemsTrie();
+    void clear();
+    bool insert(const OneResItem* item);
+    const OneResItem* find(QString res, QString name, QString type);
+};
 struct OneItem {
 public:
     int pid;
@@ -136,28 +155,39 @@ public:
 extern QVector<OneOrder> dealorders;
 extern QVector<OneOrder> noworders;
 extern QVector<OneOrder> historys;
-extern QSet<OneType> allType;
+extern QVector<OneOrder> newitems;
+extern QSet<OneResItem> allResItem;
 extern User thisUser;
 extern Config config;
+extern ResItemsTrie resItemsTrie;
 #endif
 /*全局变量声明结束*/
 
 /*函数定义*/
-bool initItems();
 bool initDealOrders();
 bool initNowOrders();
+bool initNewItems();
 bool initSatus();
+
 bool flushDealOrders(QDate start, QDate end);
 bool flushNowOrders(QDate start, QDate end);
 bool flushHistoryOrders(QDate start, QDate end);
-void addType(OneType atype, bool forCheck);
-bool hasType(QString res, QString name, QString type);
 OneOrder* getOrder(int id, QVector<OneOrder>& orders);
-const OneType* getType(int pid);
-int getTypePid(QString res, QString name, QString type);
+
+bool initResItems();
+void addResItem(OneResItem atype, bool forCheck);
+bool hasResItem(QString res, QString name, QString type);
+const OneResItem* getResItem(int pid);
+int getResItemPid(QString res, QString name, QString type);
 QString getUnits(QString res, QString name, QString type);
+QStringList getResList();
+QStringList getNameList(QString res);
+QStringList getTypeList(QString res, QString name);
+QSet<OneResItem> getResItemsByRes(QString res);
+
 bool regCheck(QString reg, QString s);
 bool orderCheck(OneOrder order);
+
 QString toSHA256(QString s);
 /*函数定义结束*/
 

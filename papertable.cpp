@@ -139,7 +139,7 @@ bool PaperTable::turnToPage(int index)
         ui->Table->item(k, 5)->setText(order->more);
         QString s = "";
         for (int j = 0; j < qMin(3, order->items.size()); j++) {
-            const OneType* type = getType(order->items.at(j).pid);
+            const OneResItem* type = getResItem(order->items.at(j).pid);
             if (type == nullptr)
                 continue;
             s = s + type->name + "(" + type->type + ") ";

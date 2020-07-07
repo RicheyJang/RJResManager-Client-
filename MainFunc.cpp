@@ -5,7 +5,7 @@
 #include <QJsonObject>
 
 /*-----------sql查询相关------------------*/
-QString getOrderSql(int onwhich)
+QString getOrderSql(int onwhich, QVector<int> idenCheckFor)
 {
     QString sql = "";
     if (onwhich == ONDealOrder || onwhich == ONNowOrder) {
@@ -18,7 +18,16 @@ QString getOrderSql(int onwhich)
             if (!c.isLetter())
                 return nullptr;
         }
-        query.exec("select status from authority where " + iden + "=1 or " + iden + "=3;");
+        QString fstSql = "select status from authority"; //" where " + iden + "=1 or " + iden + "=3;";
+        QString sndSql = ";";
+        if (idenCheckFor.size() > 0) {
+            sndSql = " where " + iden + "=" + QString::number(idenCheckFor[0]);
+            for (int i = 1; i < idenCheckFor.size(); i++) {
+                sndSql = sndSql + " or " + iden + "=" + QString::number(idenCheckFor[i]);
+            }
+            sndSql = sndSql + ";";
+        }
+        query.exec(fstSql + sndSql);
         QString idCheck, statusCheck = "";
         if (onwhich == ONDealOrder) {
             //TODO 待处理订单的人员检查
@@ -56,9 +65,9 @@ QString getOrderSql(int onwhich)
     }
     return sql;
 }
-QString getOrderSql(int onwhich, QDate start, QDate end)
+QString getOrderSql(int onwhich, QVector<int> idenCheckFor, QDate start, QDate end)
 {
-    QString pre = getOrderSql(onwhich);
+    QString pre = getOrderSql(onwhich, idenCheckFor);
     end = end.addDays(1);
     QString after = " starttime between '" + start.toString("yyyy-MM-dd") + "' and '" + end.toString("yyyy-MM-dd") + "' ";
     if (onwhich == ONHistory)
@@ -117,36 +126,31 @@ bool formOrders(QString MainSql, QString itemMainSql, QString whereSql, QVector<
 /*-----------sql查询相关end---------------*/
 
 /*--------------初始化相关---------------*/
-bool initItems()
+bool initNewItems()
 {
-    allType.clear();
-    Database base(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-    QSqlDatabase database = base.getDatabase();
-    QSqlQuery query(database);
-    query.exec("select pid,res,name,type,units,cnt from allitems;");
-    while (query.next()) {
-        OneType atype;
-        atype.pid = query.value(0).toInt();
-        atype.res = query.value(1).toString();
-        atype.name = query.value(2).toString();
-        atype.type = query.value(3).toString();
-        atype.units = query.value(4).toString();
-        atype.cnt = query.value(5).toDouble();
-        addType(atype, false);
-    }
-    base.close();
-    return true;
+    //TODO 入库订单读取待写
+    QVector<int> tmp;
+    tmp.push_back(1);
+    tmp.push_back(3);
+    QString sql = getOrderSql(ONDealOrder, tmp);
+    return formOrders(nullptr, nullptr, sql, newitems);
 }
 
 bool initDealOrders()
 {
-    QString sql = getOrderSql(ONDealOrder);
+    QVector<int> tmp;
+    tmp.push_back(1);
+    tmp.push_back(3);
+    QString sql = getOrderSql(ONDealOrder, tmp);
     return formOrders(nullptr, nullptr, sql, dealorders);
 }
 
 bool initNowOrders()
 {
-    QString sql = getOrderSql(ONNowOrder);
+    QVector<int> tmp;
+    tmp.push_back(1);
+    tmp.push_back(3);
+    QString sql = getOrderSql(ONNowOrder, tmp);
     return formOrders(nullptr, nullptr, sql, noworders);
 }
 
@@ -172,27 +176,29 @@ bool initSatus()
 /*--------------初始化相关end------------*/
 
 /*--------------功能函数-----------------*/
-uint qHash(const OneType key) //物品set的哈希映射
-{
-    return uint(key.pid);
-}
-
 bool flushDealOrders(QDate start, QDate end) //刷新待处理订单
 {
-    QString sql = getOrderSql(ONDealOrder, start, end);
+    QVector<int> tmp;
+    tmp.push_back(1);
+    tmp.push_back(3);
+    QString sql = getOrderSql(ONDealOrder, tmp, start, end);
     bool res = formOrders(nullptr, nullptr, sql, dealorders);
     return res;
 }
 bool flushNowOrders(QDate start, QDate end) //刷新当前订单
 {
-    QString sql = getOrderSql(ONNowOrder, start, end);
+    QVector<int> tmp;
+    tmp.push_back(1);
+    tmp.push_back(3);
+    QString sql = getOrderSql(ONNowOrder, tmp, start, end);
     bool res = formOrders(nullptr, nullptr, sql, noworders);
     return res;
 }
 
 bool flushHistoryOrders(QDate start, QDate end) //刷新历史订单
 {
-    QString whereSql = getOrderSql(ONHistory, start, end);
+    QVector<int> tmp;
+    QString whereSql = getOrderSql(ONHistory, tmp, start, end);
     QString MainSql = "select id,workshop,useclass,starttime,usetime,more,teacher,header,admin,keeper,accountant,status from historyorder ";
     QString itemMainSql = "select pid,cnt,status,more from historyitems";
     bool res = formOrders(MainSql, itemMainSql, whereSql, historys);
@@ -210,49 +216,214 @@ OneOrder* getOrder(int id, QVector<OneOrder>& orders) //按id查找订单order
     return &(*it);
 }
 
-bool hasType(QString res, QString name, QString type) //判断是否含有该物品
+/*----------物品相关函数----------*/
+uint qHash(const OneResItem key) //物品set的哈希映射
 {
-    for (OneType atype : allType) {
+    return uint(key.pid);
+}
+
+bool initResItems()
+{
+    allResItem.clear();
+    resItemsTrie.clear();
+    Database base(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+    QSqlDatabase database = base.getDatabase();
+    QSqlQuery query(database);
+    query.exec("select pid,res,name,type,units,cnt from allitems;");
+    while (query.next()) {
+        OneResItem aResItem;
+        aResItem.pid = query.value(0).toInt();
+        aResItem.res = query.value(1).toString();
+        aResItem.name = query.value(2).toString();
+        aResItem.type = query.value(3).toString();
+        aResItem.units = query.value(4).toString();
+        aResItem.cnt = query.value(5).toDouble();
+        addResItem(aResItem, false);
+    }
+    base.close();
+    return true;
+}
+void addResItem(OneResItem atype, bool forCheck = false) //添加物品
+{
+    if (forCheck == true) {
+        if (hasResItem(atype.res, atype.name, atype.type))
+            return;
+    }
+    QSet<OneResItem>::iterator it = allResItem.insert(atype);
+    const OneResItem* ret = (&(*it));
+    resItemsTrie.insert(ret);
+}
+bool hasResItem(QString res, QString name, QString type) //判断是否含有该物品
+{
+    /*for (OneResItem atype : allResItem) {
         if (atype.res.compare(res) == 0 && atype.name.compare(name) == 0 && atype.type.compare(type) == 0)
             return true;
     }
-    return false;
+    return false;*/
+    return resItemsTrie.find(res, name, type) != nullptr;
 }
-
-int getTypePid(QString res, QString name, QString type) //获取物品的pid
+int getResItemPid(QString res, QString name, QString type) //获取物品的pid
 {
-    for (OneType atype : allType) {
+    /*for (OneResItem atype : allResItem) {
         if (atype.res.compare(res) == 0 && atype.name.compare(name) == 0 && atype.type.compare(type) == 0)
             return atype.pid;
     }
-    return 0;
+    return 0;*/
+    const OneResItem* tmp = resItemsTrie.find(res, name, type);
+    if (tmp == nullptr)
+        return 0;
+    return tmp->pid;
 }
-
-const OneType* getType(int pid) //按pid获取到物品
+const OneResItem* getResItem(int pid) //按pid获取到物品
 {
-    OneType type;
+    OneResItem type;
     type.pid = pid;
-    QSet<OneType>::iterator it = allType.find(type);
-    if (it == allType.end())
+    QSet<OneResItem>::iterator it = allResItem.find(type);
+    if (it == allResItem.end())
         return nullptr;
     return &(*it);
 }
 QString getUnits(QString res, QString name, QString type) //获取物品的单位
 {
-    for (OneType atype : allType) {
+    /*for (OneResItem atype : allResItem) {
         if (atype.res.compare(res) == 0 && atype.name.compare(name) == 0 && atype.type.compare(type) == 0)
             return atype.units;
     }
-    return nullptr;
+    return nullptr;*/
+    const OneResItem* tmp = resItemsTrie.find(res, name, type);
+    if (tmp == nullptr)
+        return nullptr;
+    return tmp->units;
 }
-void addType(OneType atype, bool forCheck = false) //添加物品
+QStringList getResList()
 {
-    if (forCheck == true) {
-        if (hasType(atype.res, atype.name, atype.type))
-            return;
-    }
-    allType.insert(atype);
+    return QStringList(resItemsTrie.nodes[0].mp.keys());
 }
+QStringList getNameList(QString res)
+{
+    int nodeid = 0;
+    QHash<QString, int>::iterator mpit;
+    mpit = resItemsTrie.nodes[nodeid].mp.find(res);
+    if (mpit == resItemsTrie.nodes[nodeid].mp.end())
+        return QStringList();
+    nodeid = mpit.value();
+    return QStringList(resItemsTrie.nodes[nodeid].mp.keys());
+}
+QStringList getTypeList(QString res, QString name)
+{
+    int nodeid = 0;
+    QHash<QString, int>::iterator mpit;
+    mpit = resItemsTrie.nodes[nodeid].mp.find(res);
+    if (mpit == resItemsTrie.nodes[nodeid].mp.end())
+        return QStringList();
+    nodeid = mpit.value();
+    mpit = resItemsTrie.nodes[nodeid].mp.find(name);
+    if (mpit == resItemsTrie.nodes[nodeid].mp.end())
+        return QStringList();
+    nodeid = mpit.value();
+    return QStringList(resItemsTrie.nodes[nodeid].mp.keys());
+}
+QSet<OneResItem> getResItemsByRes(QString res)
+{
+    if (config.itemsList.size() < 1)
+        return QSet<OneResItem>();
+    char start = '0';
+    int i = 0;
+    for (QString tmp : config.itemsList) {
+        if (tmp == res)
+            start = config.itemStartWith[i];
+        i++;
+    }
+    QSet<OneResItem> st;
+    for (OneResItem item : allResItem) {
+        if (QString::number(item.pid).at(0).toLatin1() == start) {
+            st.insert(item);
+        }
+    }
+    return st;
+}
+
+ResItemsTrie::ResItemsTrie()
+{
+    clear();
+}
+void ResItemsTrie::clear()
+{
+    itemsSum = 0;
+    nodes.clear();
+    OneResItem tmp;
+    tmp.pid = 0;
+    tmp.mp.clear();
+    nodes.push_back(tmp);
+}
+const OneResItem* ResItemsTrie::find(QString res, QString name, QString type)
+{
+    int nodeid = 0;
+    QHash<QString, int>::iterator mpit;
+    mpit = nodes[nodeid].mp.find(res);
+    if (mpit == nodes[nodeid].mp.end())
+        return nullptr;
+    nodeid = mpit.value();
+    mpit = nodes[nodeid].mp.find(name);
+    if (mpit == nodes[nodeid].mp.end())
+        return nullptr;
+    nodeid = mpit.value();
+    mpit = nodes[nodeid].mp.find(type);
+    if (mpit == nodes[nodeid].mp.end())
+        return nullptr;
+    nodeid = mpit.value();
+    return nodes[nodeid].p;
+}
+bool ResItemsTrie::insert(const OneResItem* item)
+{
+    int nodeid = 0;
+    QHash<QString, int>::iterator mpit;
+    mpit = nodes[nodeid].mp.find(item->res);
+    if (mpit == nodes[nodeid].mp.end()) {
+        OneResItem tmp;
+        tmp.pid = 1;
+        tmp.res = item->res;
+        tmp.mp.clear();
+        itemsSum = nodes.size();
+        tmp.nodeid = itemsSum;
+        nodes.push_back(tmp);
+        mpit = nodes[nodeid].mp.insert(item->res, tmp.nodeid);
+    }
+    nodeid = mpit.value();
+    mpit = nodes[nodeid].mp.find(item->name);
+    if (mpit == nodes[nodeid].mp.end()) {
+        OneResItem tmp;
+        tmp.pid = 2;
+        tmp.res = item->res;
+        tmp.name = item->name;
+        tmp.mp.clear();
+        itemsSum = nodes.size();
+        tmp.nodeid = itemsSum;
+        nodes.push_back(tmp);
+        mpit = nodes[nodeid].mp.insert(item->name, tmp.nodeid);
+    }
+    nodeid = mpit.value();
+    mpit = nodes[nodeid].mp.find(item->type);
+    if (mpit == nodes[nodeid].mp.end()) {
+        OneResItem tmp;
+        tmp.pid = 3;
+        tmp.res = item->res;
+        tmp.name = item->name;
+        tmp.type = item->type;
+        tmp.mp.clear();
+        itemsSum = nodes.size();
+        tmp.nodeid = itemsSum;
+        nodes.push_back(tmp);
+        mpit = nodes[nodeid].mp.insert(item->type, tmp.nodeid);
+    }
+    nodeid = mpit.value();
+    nodes[nodeid].mp.clear(); //当前认为同res、name、type的物品唯一
+    nodes[nodeid].p = item;
+    return true;
+}
+/*----------物品相关函数end----------*/
+
+/*----------检查相关函数------------*/
 bool regCheck(QString reg, QString s) //正则表达式格式化检查 用于检查用户名和密码格式
 {
     QRegExp rx(reg);
@@ -264,17 +435,19 @@ bool regCheck(QString reg, QString s) //正则表达式格式化检查 用于检
 }
 bool orderCheck(OneOrder order)
 {
-    initItems();
+    initResItems();
     std::unordered_map<int, double> mp;
     for (OneItem item : order.items) {
         mp[item.pid] = mp[item.pid] + item.number;
     }
     for (auto num : mp) {
-        if ((getType(num.first)->cnt) < num.second)
+        if ((getResItem(num.first)->cnt) < num.second)
             return false;
     }
     return true;
 }
+/*----------检查相关函数end----------*/
+
 /*--------------功能函数end--------------*/
 
 /*--------安全相关----------------*/

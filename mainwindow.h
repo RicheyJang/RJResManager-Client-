@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "aboutme.h"
+#include "errorwidget.h"
 #include "itemsmanager.h"
 #include "login.h"
 #include "maininclude.h"

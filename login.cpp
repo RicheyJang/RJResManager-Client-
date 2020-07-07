@@ -191,7 +191,7 @@ void Login::allInit() //全局初始化
         if (thisUser.identity != QString("keeper") && thisUser.identity != QString("accountant"))
             thisUser.identity = QString("teacher");
     }
-    if (!initItems()) {
+    if (!initResItems()) {
         QMessageBox::warning(nullptr, QString("警告"), QString("连接数据库出错\nInitItems wrong!"));
         ui->progressBar->hide();
         return;

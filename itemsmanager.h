@@ -21,7 +21,7 @@ private slots:
 private:
     Ui::ItemsManager* ui;
     QStringList titles;
-    void setTable(QTableWidget* table, char startWith);
+    void setTable(QTableWidget* table, QString res);
 };
 
 #endif // ITEMSMANAGER_H

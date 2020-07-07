@@ -19,23 +19,27 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     MainFunc.cpp \
     aboutme.cpp \
+    errorwidget.cpp \
     hintcombobox.cpp \
     itemsmanager.cpp \
     login.cpp \
     main.cpp \
     mainwindow.cpp \
     newOrder.cpp \
+    newitemorder.cpp \
     papertable.cpp \
     usermanager.cpp
 
 HEADERS += \
     QDBC.h \
     aboutme.h \
+    errorwidget.h \
     hintcombobox.h \
     itemsmanager.h \
     login.h \
     maininclude.h \
     mainwindow.h \
+    newitemorder.h \
     neworder.h \
     papertable.h \
     usermanager.h
@@ -45,6 +49,7 @@ FORMS += \
     itemsmanager.ui \
     login.ui \
     mainwindow.ui \
+    newitemorder.ui \
     neworder.ui \
     papertable.ui \
     usermanager.ui

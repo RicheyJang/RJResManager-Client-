@@ -24,8 +24,15 @@ void MainWindow::flushMainWindow()
 {
     if (thisUser.identity != QString("admin") && thisUser.identity != QString("keeper") && thisUser.identity != QString("accountant"))
         ui->store->menuAction()->setVisible(false);
-    else
+    else {
         ui->store->menuAction()->setVisible(true);
+        initNewItems(); //TODO 入库订单提示栈待写
+        if (newitems.size() > 0) {
+            ErrorWidget* ew = new ErrorWidget(this);
+            QString tips = QString("<font color=green>您有新的待处理<font color=red>入库账目</font>，请及时处理</font>");
+            ew->setTipInfo(tips);
+        }
+    }
     if (thisUser.identity != QString("admin"))
         ui->people->menuAction()->setVisible(false);
     else
@@ -86,7 +93,7 @@ void MainWindow::setHistoryButton()
     }
     for (int i = 0; i < 10; i++)
         dealButton[i] = nullptr;
-    if (thisUser.identity != QString("keeper") && thisUser.identity != QString("accountant")) {
+    if (thisUser.identity == QString("teacher")) {
         dealButton[1] = new QPushButton(QString("重新发起该订单"));
         connect(dealButton[1], &QPushButton::clicked, this, &MainWindow::againOrder);
         num = 1;

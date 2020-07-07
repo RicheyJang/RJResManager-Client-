@@ -4,10 +4,12 @@
 #include "mainwindow.h"
 #include <QApplication>
 
-QSet<OneType> allType;
+QSet<OneResItem> allResItem;
+ResItemsTrie resItemsTrie;
 QVector<OneOrder> dealorders;
 QVector<OneOrder> noworders;
 QVector<OneOrder> historys;
+QVector<OneOrder> newitems;
 User thisUser;
 Config config("./config.ini");
 

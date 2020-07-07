@@ -28,7 +28,7 @@ ItemsManager::ItemsManager(QWidget* parent)
     ui->tabWidget->setCurrentIndex(0);
     titles.clear();
     titles << QString("物品编号") << QString("名称") << QString("型号") << QString("数量") << QString("单位");
-    setTable(ui->table_Out, config.itemStartWith[0]);
+    setTable(ui->table_Out, config.itemsList[0]);
 }
 
 ItemsManager::~ItemsManager()
@@ -36,15 +36,26 @@ ItemsManager::~ItemsManager()
     delete ui;
 }
 
-void ItemsManager::setTable(QTableWidget* tab, char startWith)
+void ItemsManager::setTable(QTableWidget* tab, QString res)
 {
-    initItems();
+    initResItems();
 
     tab->clear();
     tab->setColumnCount(titles.count());
     tab->setHorizontalHeaderLabels(titles);
     int cnt = 0;
-    for (OneType item : allType) {
+    QSet<OneResItem> st = getResItemsByRes(res);
+    for (OneResItem item : st) {
+        cnt++;
+        tab->setRowCount(cnt);
+        tab->setItem(cnt - 1, 0, new QTableWidgetItem(QString::number(item.pid)));
+        tab->setItem(cnt - 1, 1, new QTableWidgetItem(item.name));
+        tab->setItem(cnt - 1, 2, new QTableWidgetItem(item.type));
+        tab->setItem(cnt - 1, 3, new QTableWidgetItem(QString::number(item.cnt, 'g', 3)));
+        tab->setItem(cnt - 1, 4, new QTableWidgetItem(item.units));
+    }
+    /*for (OneResItem item : allResItem) {
+        //TODO 仓库物品遍历
         if (QString::number(item.pid).at(0).toLatin1() == startWith) {
             cnt++;
             tab->setRowCount(cnt);
@@ -54,13 +65,13 @@ void ItemsManager::setTable(QTableWidget* tab, char startWith)
             tab->setItem(cnt - 1, 3, new QTableWidgetItem(QString::number(item.cnt, 'g', 3)));
             tab->setItem(cnt - 1, 4, new QTableWidgetItem(item.units));
         }
-    }
+    }*/
 }
 
 void ItemsManager::on_tabWidget_currentChanged(int index)
 {
     if (index == 0)
-        setTable(ui->table_Out, config.itemStartWith[0]);
+        setTable(ui->table_Out, config.itemsList[0]);
     else if (index == 1)
-        setTable(ui->table_Rent, config.itemStartWith[1]);
+        setTable(ui->table_Rent, config.itemsList[1]);
 }

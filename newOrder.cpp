@@ -11,7 +11,8 @@ NewOrder::NewOrder(QWidget* parent)
     setWindowTitle(QString("发起新订单"));
     QString wkshop = QString("所用车间：") + thisUser.workshop;
     ui->workshopLabel->setText(wkshop);
-    isInNewOrder = true;
+    //isInNewOrder = true;
+    dowhat = ONADDNEWORDER;
     ui->itemTable->setColumnCount(6);
     QStringList titles;
     titles << QString("pid") << QString("品类") << QString("名称") << QString("型号") << QString("数量") << QString("备注");
@@ -43,7 +44,8 @@ void NewOrder::setModel(OneOrder order)
 
 void NewOrder::changeOrder(OneOrder* order) //修改订单 窗口
 {
-    isInNewOrder = false;
+    //isInNewOrder = false;
+    dowhat = ONCHANGEORDER;
     theOrder = order;
     setOrder(*order);
     QString title = QString("修改订单 编号：") + QString::number(order->id);
@@ -52,7 +54,8 @@ void NewOrder::changeOrder(OneOrder* order) //修改订单 窗口
 
 void NewOrder::showOrder(OneOrder order) //展示订单 窗口
 {
-    isInNewOrder = false;
+    //isInNewOrder = false;
+    dowhat = ONSHOWORDER;
     QLayoutItem* child;
     while ((child = ui->Layout_add->itemAt(0)) != nullptr) {
         ui->Layout_add->removeItem(child);
@@ -86,13 +89,11 @@ void NewOrder::addOneItem(OneItem item)
     ui->itemTable->setRowCount(row + 1);
     QTableWidgetItem* pid = new QTableWidgetItem(QString::number(item.pid));
     ui->itemTable->setItem(row, 0, pid);
-    OneType tmp;
-    tmp.pid = item.pid;
-    QSet<OneType>::iterator it = allType.find(tmp);
-    QTableWidgetItem* res = new QTableWidgetItem((*it).res);
-    QTableWidgetItem* name = new QTableWidgetItem((*it).name);
-    QTableWidgetItem* type = new QTableWidgetItem((*it).type);
-    QString u = QString::number(item.number) + " " + (*it).units;
+    const OneResItem* tmp = getResItem(item.pid);
+    QTableWidgetItem* res = new QTableWidgetItem(tmp->res);
+    QTableWidgetItem* name = new QTableWidgetItem(tmp->name);
+    QTableWidgetItem* type = new QTableWidgetItem(tmp->type);
+    QString u = QString::number(item.number) + " " + tmp->units;
     QTableWidgetItem* num = new QTableWidgetItem(u);
     QTableWidgetItem* more = new QTableWidgetItem(item.more);
     pid->setFlags(pid->flags() & (~Qt::ItemIsEditable));
@@ -110,31 +111,40 @@ void NewOrder::addOneItem(OneItem item)
 
 void NewOrder::flushBox(int index)
 {
-    QSet<QString> set;
+    //QSet<QString> set;
     if (index == 1) {
-        for (OneType atype : allType) {
+        //set = getResSet();
+        /*for (OneType atype : allType) {
             set.insert(atype.res);
-        }
-        ui->resBox->setStringList(QStringList::fromSet(set));
+        }*/
+        //ui->resBox->setStringList(QStringList::fromSet(set));
+        QStringList sl = getResList();
+        ui->resBox->setStringList(sl);
         return;
     } else if (index == 2) {
         QString res = ui->resBox->currentText();
-        for (OneType atype : allType) {
+        //set = getNameSet(res);
+        /*for (OneType atype : allType) {
             if (res.compare(atype.res) == 0) {
                 set.insert(atype.name);
             }
-        }
-        ui->nameBox->setStringList(QStringList::fromSet(set));
+        }*/
+        //ui->nameBox->setStringList(QStringList::fromSet(set));
+        QStringList sl = getNameList(res);
+        ui->nameBox->setStringList(sl);
         return;
     } else if (index == 3) {
         QString res = ui->resBox->currentText();
         QString name = ui->nameBox->currentText();
-        for (OneType atype : allType) {
+        //set = getTypeSet(res, name);
+        /*for (OneType atype : allType) {
             if (res.compare(atype.res) == 0 && name.compare(atype.name) == 0) {
                 set.insert(atype.type);
             }
-        }
-        ui->typeBox->setStringList(QStringList::fromSet(set));
+        }*/
+        //ui->typeBox->setStringList(QStringList::fromSet(set));
+        QStringList sl = getTypeList(res, name);
+        ui->typeBox->setStringList(sl);
     }
     //    qDebug() << QString::number(index) + " flush";
 }
@@ -152,7 +162,7 @@ void NewOrder::on_addItem_clicked()
     QString res = ui->resBox->currentText();
     QString name = ui->nameBox->currentText();
     QString type = ui->typeBox->currentText();
-    int pid = getTypePid(res, name, type);
+    int pid = getResItemPid(res, name, type);
     if (pid == 0) {
         QMessageBox::information(nullptr, QString("错误"), QString("查无此物，请正确填入物品信息"));
         return;
@@ -211,16 +221,18 @@ void NewOrder::on_typeBox_currentTextChanged(const QString& arg1)
 
 void NewOrder::on_confirm_clicked()
 {
+    if (dowhat != ONADDNEWORDER && dowhat != ONCHANGEORDER)
+        return;
     QJsonObject json;
     QJsonObject orderInf;
     QJsonObject userInf;
     userInf.insert("username", thisUser.username);
     userInf.insert("password", thisUser.password);
 
-    if (!isInNewOrder)
+    if (dowhat == ONCHANGEORDER)
         orderInf.insert("id", QJsonValue(theOrder->id));
     orderInf.insert("useclass", QJsonValue(ui->classEdit->text()));
-    if (isInNewOrder)
+    if (dowhat == ONADDNEWORDER)
         orderInf.insert("starttime", QJsonValue(QDate::currentDate().toString("yyyy-MM-dd")));
     orderInf.insert("more", QJsonValue(ui->moreEdit->toPlainText()));
     //WARNING 订单所属车间的添加 暂未考虑教师的多身份性
@@ -262,6 +274,14 @@ void NewOrder::on_cancel_clicked()
 /*-------上传函数-------*/
 void NewOrder::postOn(QJsonObject json)
 {
+    QString Ptype;
+    if (dowhat == ONADDNEWORDER)
+        Ptype = QString("/neworder");
+    else if (dowhat == ONCHANGEORDER)
+        Ptype = QString("/changeorder");
+    else
+        return;
+
     QJsonDocument document;
     document.setObject(json);
 
@@ -273,11 +293,6 @@ void NewOrder::postOn(QJsonObject json)
     request->setHeader(QNetworkRequest::ContentTypeHeader, "application/json"); //上面语句固定这么写，要不然会报错“contest—type is missing”
     //request.setRawHeader("XXX3", "XXX4");
 
-    QString Ptype;
-    if (isInNewOrder)
-        Ptype = QString("/neworder");
-    else
-        Ptype = QString("/changeorder");
     QString url = QString("http://") + config.ip + ':' + QString::number(config.serverPort) + Ptype;
     request->setUrl(QUrl(url));
 
@@ -291,7 +306,7 @@ void NewOrder::postOn(QJsonObject json)
 void NewOrder::finishPost(QNetworkReply* reply)
 {
     if (reply->error() == QNetworkReply::NoError) {
-        if (isInNewOrder)
+        if (dowhat == ONADDNEWORDER)
             QMessageBox::information(nullptr, QString("完成"), QString("发起订单成功"));
         else
             QMessageBox::information(nullptr, QString("完成"), QString("修改订单成功"));
