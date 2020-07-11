@@ -40,6 +40,16 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>待处理账目</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>历史账目</string>
+       </attribute>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -50,7 +60,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>26</height>
+     <height>25</height>
     </rect>
    </property>
   </widget>

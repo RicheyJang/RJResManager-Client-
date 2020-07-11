@@ -8,11 +8,8 @@ NewOrder::NewOrder(QWidget* parent)
     ui->setupUi(this);
     setAttribute(Qt::WA_QuitOnClose, false);
     setAttribute(Qt::WA_DeleteOnClose, true);
-    setWindowTitle(QString("发起新订单"));
-    QString wkshop = QString("所用车间：") + thisUser.workshop;
-    ui->workshopLabel->setText(wkshop);
-    //isInNewOrder = true;
-    dowhat = ONADDNEWORDER;
+    messenger=new Messenger();
+
     ui->itemTable->setColumnCount(6);
     QStringList titles;
     titles << QString("pid") << QString("品类") << QString("名称") << QString("型号") << QString("数量") << QString("备注");
@@ -25,27 +22,25 @@ NewOrder::~NewOrder()
     delete ui;
 }
 
-void NewOrder::setOrder(OneOrder order)
+void NewOrder::addnewOrder()
 {
-    for (OneItem item : order.items) {
-        addOneItem(item);
-    }
-    ui->classEdit->setText(order.useclass);
-    ui->moreEdit->setText(order.more);
-    QString wkshop = QString("所用车间：") + order.workshop;
-    ui->workshopLabel->clear();
+    dowhat = ONADDNEWORDER;
+    connect(messenger,&Messenger::gotResponse,this,&NewOrder::afterConfirmReply);
+    QString wkshop = QString("所用车间：") + thisUser.workshop;
     ui->workshopLabel->setText(wkshop);
+    setWindowTitle(QString("发起新订单"));
 }
 
-void NewOrder::setModel(OneOrder order)
+void NewOrder::addnewOrder_WithModel(OneOrder order)
 {
+    addnewOrder();
     setOrder(order);
 }
 
 void NewOrder::changeOrder(OneOrder* order) //修改订单 窗口
 {
-    //isInNewOrder = false;
     dowhat = ONCHANGEORDER;
+    connect(messenger,&Messenger::gotResponse,this,&NewOrder::afterConfirmReply);
     theOrder = order;
     setOrder(*order);
     QString title = QString("修改订单 编号：") + QString::number(order->id);
@@ -54,7 +49,6 @@ void NewOrder::changeOrder(OneOrder* order) //修改订单 窗口
 
 void NewOrder::showOrder(OneOrder order) //展示订单 窗口
 {
-    //isInNewOrder = false;
     dowhat = ONSHOWORDER;
     QLayoutItem* child;
     while ((child = ui->Layout_add->itemAt(0)) != nullptr) {
@@ -81,8 +75,19 @@ void NewOrder::showOrder(OneOrder order) //展示订单 窗口
     QString title = QString("当前订单 编号：") + QString::number(order.id);
     setWindowTitle(title);
 }
-
 /*----------辅助函数--------------*/
+void NewOrder::setOrder(OneOrder order)
+{
+    for (OneItem item : order.items) {
+        addOneItem(item);
+    }
+    ui->classEdit->setText(order.useclass);
+    ui->moreEdit->setText(order.more);
+    QString wkshop = QString("所用车间：") + order.workshop;
+    ui->workshopLabel->clear();
+    ui->workshopLabel->setText(wkshop);
+}
+
 void NewOrder::addOneItem(OneItem item)
 {
     int row = ui->itemTable->rowCount();
@@ -246,7 +251,6 @@ void NewOrder::on_confirm_clicked()
         QString s = ui->itemTable->item(i, 4)->text().split(" ")[0];
         item.insert("cnt", QJsonValue(s.toDouble()));
         item.insert("more", QJsonValue(ui->itemTable->item(i, 5)->text()));
-        //qDebug() << item.value("cnt");
         items.append(QJsonValue(item));
     }
     if (row == 0) {
@@ -259,7 +263,15 @@ void NewOrder::on_confirm_clicked()
     json.insert("orderInformation", QJsonValue(orderInf));
     json.insert("itemsInformation", QJsonValue(items));
 
-    postOn(json);
+    QString Ptype;
+    if (dowhat == ONADDNEWORDER)
+        Ptype = QString("/new/forOrder");
+    else if (dowhat == ONCHANGEORDER)
+        Ptype = QString("/changeorder");
+    else
+        return;
+    messenger->postON(json,Ptype);
+    ui->confirm->setDisabled(true);
 }
 
 void NewOrder::on_cancel_clicked()
@@ -272,43 +284,28 @@ void NewOrder::on_cancel_clicked()
 /*-------按钮响应end-------*/
 
 /*-------上传函数-------*/
-void NewOrder::postOn(QJsonObject json)
+void NewOrder::afterConfirmReply(QNetworkReply* reply)
 {
-    QString Ptype;
-    if (dowhat == ONADDNEWORDER)
-        Ptype = QString("/neworder");
-    else if (dowhat == ONCHANGEORDER)
-        Ptype = QString("/changeorder");
-    else
-        return;
-
-    QJsonDocument document;
-    document.setObject(json);
-
-    QByteArray data = document.toJson(QJsonDocument::Indented);
-
-    QNetworkAccessManager* manager = new QNetworkAccessManager();
-    QNetworkRequest* request = new QNetworkRequest;
-    request->setHeader(QNetworkRequest::UserAgentHeader, config.UserAgent);
-    request->setHeader(QNetworkRequest::ContentTypeHeader, "application/json"); //上面语句固定这么写，要不然会报错“contest—type is missing”
-    //request.setRawHeader("XXX3", "XXX4");
-
-    QString url = QString("http://") + config.ip + ':' + QString::number(config.serverPort) + Ptype;
-    request->setUrl(QUrl(url));
-
-    manager->post(*request, data);
-    connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(finishPost(QNetworkReply*)));
-    connect(manager, &QNetworkAccessManager::finished, manager, &QNetworkAccessManager::deleteLater);
-    delete request;
-    request = nullptr;
+    if (reply->error() == QNetworkReply::NoError) {
+        if (dowhat == ONADDNEWORDER)
+            QMessageBox::information(nullptr, QString("完成"), QString("发起订单成功"));
+        else if(dowhat == ONCHANGEORDER)
+            QMessageBox::information(nullptr, QString("完成"), QString("修改订单成功"));
+        reply->deleteLater();
+        this->close();
+        emit finishChange();
+    } else {
+        QMessageBox::warning(nullptr, QString("错误"), QString("失败，请稍后重试"));
+        reply->deleteLater();
+        ui->confirm->setDisabled(false);
+    }
 }
-
 void NewOrder::finishPost(QNetworkReply* reply)
 {
     if (reply->error() == QNetworkReply::NoError) {
         if (dowhat == ONADDNEWORDER)
             QMessageBox::information(nullptr, QString("完成"), QString("发起订单成功"));
-        else
+        else if(dowhat == ONCHANGEORDER)
             QMessageBox::information(nullptr, QString("完成"), QString("修改订单成功"));
         reply->deleteLater();
         this->close();

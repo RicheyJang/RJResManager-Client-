@@ -25,6 +25,7 @@ SOURCES += \
     login.cpp \
     main.cpp \
     mainwindow.cpp \
+    messenger.cpp \
     newOrder.cpp \
     newitemorder.cpp \
     papertable.cpp \
@@ -39,6 +40,7 @@ HEADERS += \
     login.h \
     maininclude.h \
     mainwindow.h \
+    messenger.h \
     newitemorder.h \
     neworder.h \
     papertable.h \

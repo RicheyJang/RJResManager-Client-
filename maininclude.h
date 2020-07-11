@@ -71,6 +71,7 @@ public:
     int TableOnePageRows;
     Config(QString file);
 };
+
 struct OneResItem {
 public:
     int pid;

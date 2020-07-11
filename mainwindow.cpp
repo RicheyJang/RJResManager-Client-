@@ -50,6 +50,8 @@ void MainWindow::initMainWindow()
     for (int i = 0; i < 10; i++)
         dealButton[i] = nullptr;
     flushMainWindow();
+    messenger=new Messenger();
+    connect(messenger,&Messenger::gotResponse,this,&MainWindow::finishPost);
     on_showDeal_clicked();
     this->show();
 }
@@ -58,6 +60,7 @@ void MainWindow::initMainWindow()
 void MainWindow::on_newOrder_clicked()
 {
     NewOrder* order = new NewOrder();
+    order->addnewOrder();
     order->show();
 }
 
@@ -198,7 +201,7 @@ void MainWindow::againOrder() //重新发起订单
     if (!askForConferm(ask))
         return;
     NewOrder* Norder = new NewOrder();
-    Norder->setModel(*order);
+    Norder->addnewOrder_WithModel(*order);
     Norder->show();
 }
 void MainWindow::changeThisOrder() //修改选中订单
@@ -328,7 +331,8 @@ bool MainWindow::finishOrder(int orderID)
     json.insert("userInformation", QJsonValue(userInf));
     json.insert("orderInformation", QJsonValue(orderInf));
 
-    postOn(json, QString("/finishorder"));
+    //postOn(json, QString("/finishorder"));
+    messenger->postON(json, QString("/finishorder"));
     return true;
 }
 
@@ -346,30 +350,9 @@ bool MainWindow::changeStatus(int orderID, QString toStatus)
     json.insert("userInformation", QJsonValue(userInf));
     json.insert("orderInformation", QJsonValue(orderInf));
 
-    postOn(json, QString("/changestatus"));
+    //postOn(json, QString("/changestatus"));
+    messenger->postON(json, QString("/changestatus"));
     return true;
-}
-
-void MainWindow::postOn(QJsonObject json, QString uri)
-{
-    QJsonDocument document;
-    document.setObject(json);
-
-    QByteArray data = document.toJson(QJsonDocument::Indented);
-
-    QNetworkAccessManager* manager = new QNetworkAccessManager();
-    QNetworkRequest* request = new QNetworkRequest;
-    request->setHeader(QNetworkRequest::UserAgentHeader, config.UserAgent);
-    request->setHeader(QNetworkRequest::ContentTypeHeader, "application/json"); //上面语句固定这么写，要不然会报错“contest—type is missing”
-
-    QString url = QString("http://") + config.ip + ':' + QString::number(config.serverPort) + uri;
-    request->setUrl(QUrl(url));
-
-    manager->post(*request, data);
-    connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(finishPost(QNetworkReply*)));
-    connect(manager, &QNetworkAccessManager::finished, manager, &QNetworkAccessManager::deleteLater);
-    delete request;
-    request = nullptr;
 }
 
 void MainWindow::finishPost(QNetworkReply* reply)

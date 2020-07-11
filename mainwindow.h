@@ -8,6 +8,7 @@
 #include "maininclude.h"
 #include "neworder.h"
 #include "usermanager.h"
+#include "messenger.h"
 #include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
@@ -54,6 +55,7 @@ private slots:
 
 private:
     Login* login;
+    Messenger* messenger;
     Ui::MainWindow* ui;
     QPushButton* dealButton[10] = { nullptr };
     void setDealButton();
@@ -61,7 +63,6 @@ private:
     void setHistoryButton();
     bool changeStatus(int orderID, QString toStatus);
     bool finishOrder(int orderID);
-    void postOn(QJsonObject json, QString uri);
 };
 
 #ifndef ISMAINCPP

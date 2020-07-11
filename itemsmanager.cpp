@@ -54,18 +54,6 @@ void ItemsManager::setTable(QTableWidget* tab, QString res)
         tab->setItem(cnt - 1, 3, new QTableWidgetItem(QString::number(item.cnt, 'g', 3)));
         tab->setItem(cnt - 1, 4, new QTableWidgetItem(item.units));
     }
-    /*for (OneResItem item : allResItem) {
-        //TODO 仓库物品遍历
-        if (QString::number(item.pid).at(0).toLatin1() == startWith) {
-            cnt++;
-            tab->setRowCount(cnt);
-            tab->setItem(cnt - 1, 0, new QTableWidgetItem(QString::number(item.pid)));
-            tab->setItem(cnt - 1, 1, new QTableWidgetItem(item.name));
-            tab->setItem(cnt - 1, 2, new QTableWidgetItem(item.type));
-            tab->setItem(cnt - 1, 3, new QTableWidgetItem(QString::number(item.cnt, 'g', 3)));
-            tab->setItem(cnt - 1, 4, new QTableWidgetItem(item.units));
-        }
-    }*/
 }
 
 void ItemsManager::on_tabWidget_currentChanged(int index)
