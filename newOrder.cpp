@@ -263,14 +263,12 @@ void NewOrder::on_confirm_clicked()
     json.insert("orderInformation", QJsonValue(orderInf));
     json.insert("itemsInformation", QJsonValue(items));
 
-    QString Ptype;
     if (dowhat == ONADDNEWORDER)
-        Ptype = QString("/new/forOrder");
+        messenger->newOrder(json);
     else if (dowhat == ONCHANGEORDER)
-        Ptype = QString("/changeorder");
+        messenger->changeOrder(json);
     else
         return;
-    messenger->postON(json,Ptype);
     ui->confirm->setDisabled(true);
 }
 

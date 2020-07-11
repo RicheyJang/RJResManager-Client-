@@ -9,7 +9,12 @@ class Messenger : public QObject
     Q_OBJECT
 public:
     explicit Messenger(QObject *parent = nullptr);
-    void postON(QJsonObject json,QString uri);
+
+    void finishOneOrder(int orderID);
+    void changeOneStatus(int orderID, QString toStatus);
+    void newOrder(QJsonObject json);
+    void changeOrder(QJsonObject json);
+
     ~Messenger();
 
 signals:
@@ -20,6 +25,7 @@ private slots:
 
 private:
     QNetworkAccessManager* manager;
+    void postON(QJsonObject json,QString uri);
 };
 
 #endif // MESSENGER_H

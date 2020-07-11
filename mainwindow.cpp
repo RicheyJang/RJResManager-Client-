@@ -180,11 +180,13 @@ void MainWindow::setDealButton()
         ui->buttomLayout->addWidget(dealButton[i]);
     }
 }
+
 bool askForConferm(QString text)
 {
     QMessageBox::StandardButton res = QMessageBox::question(nullptr, QString("确定？"), text);
     return res == QMessageBox::Yes;
 }
+
 void MainWindow::againOrder() //重新发起订单
 {
     int id = ui->orderTable->getCurrentID();
@@ -204,6 +206,7 @@ void MainWindow::againOrder() //重新发起订单
     Norder->addnewOrder_WithModel(*order);
     Norder->show();
 }
+
 void MainWindow::changeThisOrder() //修改选中订单
 {
     int id = ui->orderTable->getCurrentID();
@@ -217,29 +220,11 @@ void MainWindow::changeThisOrder() //修改选中订单
     connect(newOrder, &NewOrder::finishChange, this, &MainWindow::afterChange);
     newOrder->show();
 }
-bool MainWindow::changeToByID(QString dowhat, int i) //修改订单状态
-{
-    int id = ui->orderTable->getCurrentID();
-    if (id == 0)
-        return false;
-    OneOrder* order = getOrder(id, dealorders);
-    if (order == nullptr) { //除撤销订单外，只能修改待处理订单
-        if (i == 0)
-            order = getOrder(id, noworders);
-        if (order == nullptr) {
-            QMessageBox::warning(nullptr, QString("错误"), QString("失败，请稍后重试"));
-            return false;
-        }
-    }
-    QString ask = QString("确定") + dowhat + QString("该订单(编号为%1)吗？").arg(id);
-    if (!askForConferm(ask))
-        return false;
-    return changeStatus(id, config.statusList[i]);
-}
 void MainWindow::afterChange()
 {
     ui->orderTable->flush();
 }
+
 void MainWindow::agreeHeader()
 {
     changeToByID(QString("同意"), 3);
@@ -318,40 +303,34 @@ void MainWindow::disagreeTeacher()
 /*-----------底部按钮end------------*/
 
 /*-----------修改状态---------------*/
-bool MainWindow::finishOrder(int orderID)
+bool MainWindow::changeToByID(QString dowhat, int i) //修改订单状态
 {
-    QJsonObject json;
-    QJsonObject orderInf;
-    QJsonObject userInf;
-    userInf.insert("username", thisUser.username);
-    userInf.insert("password", thisUser.password);
-
-    orderInf.insert("id", QJsonValue(orderID));
-
-    json.insert("userInformation", QJsonValue(userInf));
-    json.insert("orderInformation", QJsonValue(orderInf));
-
-    //postOn(json, QString("/finishorder"));
-    messenger->postON(json, QString("/finishorder"));
+    int id = ui->orderTable->getCurrentID();
+    if (id == 0)
+        return false;
+    OneOrder* order = getOrder(id, dealorders);
+    if (order == nullptr) { //除撤销订单外，只能修改待处理订单
+        if (i == 0)
+            order = getOrder(id, noworders);
+        if (order == nullptr) {
+            QMessageBox::warning(nullptr, QString("错误"), QString("失败，请稍后重试"));
+            return false;
+        }
+    }
+    QString ask = QString("确定") + dowhat + QString("该订单(编号为%1)吗？").arg(id);
+    if (!askForConferm(ask))
+        return false;
+    return changeStatus(id, config.statusList[i]);
+}
+bool MainWindow::changeStatus(int orderID, QString toStatus)
+{
+    messenger->changeOneStatus(orderID,toStatus);
     return true;
 }
 
-bool MainWindow::changeStatus(int orderID, QString toStatus)
+bool MainWindow::finishOrder(int orderID)
 {
-    QJsonObject json;
-    QJsonObject orderInf;
-    QJsonObject userInf;
-    userInf.insert("username", thisUser.username);
-    userInf.insert("password", thisUser.password);
-
-    orderInf.insert("id", QJsonValue(orderID));
-    orderInf.insert("status", QJsonValue(toStatus));
-
-    json.insert("userInformation", QJsonValue(userInf));
-    json.insert("orderInformation", QJsonValue(orderInf));
-
-    //postOn(json, QString("/changestatus"));
-    messenger->postON(json, QString("/changestatus"));
+    messenger->finishOneOrder(orderID);
     return true;
 }
 
