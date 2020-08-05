@@ -11,9 +11,12 @@ public:
     explicit Messenger(QObject *parent = nullptr);
 
     void finishOneOrder(int orderID);
+    void finishResOrder(int orderID);
     void changeOneStatus(int orderID, QString toStatus);
     void newOrder(QJsonObject json);
     void changeOrder(QJsonObject json);
+    void newResOrder(QJsonObject json);
+    void changeResOrder(QJsonObject json);
 
     ~Messenger();
 

@@ -27,10 +27,17 @@ void MainWindow::flushMainWindow()
     else {
         ui->store->menuAction()->setVisible(true);
         initNewItems(); //TODO 入库订单提示栈待写
-        if (newitems.size() > 0) {
+        if (dealResOrders.size() > 0) {
             ErrorWidget* ew = new ErrorWidget(this);
             QString tips = QString("<font color=green>您有新的待处理<font color=red>入库账目</font>，请及时处理</font>");
             ew->setTipInfo(tips);
+            ew->show();
+        }
+        if(thisUser.identity == QString("keeper"))
+        {
+            QAction* newItemAction=new QAction(QString("物品入库"));
+            connect(newItemAction,&QAction::triggered,this,&MainWindow::on_newItemOrder);
+            ui->store->addAction(newItemAction);
         }
     }
     if (thisUser.identity != QString("admin"))
@@ -179,12 +186,6 @@ void MainWindow::setDealButton()
         dealButton[i]->setMinimumHeight(35);
         ui->buttomLayout->addWidget(dealButton[i]);
     }
-}
-
-bool askForConferm(QString text)
-{
-    QMessageBox::StandardButton res = QMessageBox::question(nullptr, QString("确定？"), text);
-    return res == QMessageBox::Yes;
 }
 
 void MainWindow::againOrder() //重新发起订单
@@ -348,6 +349,12 @@ void MainWindow::finishPost(QNetworkReply* reply)
 /*-----------修改状态end------------*/
 
 /*-----------菜单栏-----------------*/
+void MainWindow::on_newItemOrder()
+{
+    NewItemOrder* nio=new NewItemOrder();
+    nio->show();
+}
+
 void MainWindow::on_about_me_triggered()
 {
     AboutMe* am = new AboutMe();

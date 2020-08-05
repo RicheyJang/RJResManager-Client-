@@ -23,7 +23,7 @@ public:
 signals:
     void finishChange();
 
-private slots:
+protected slots:
     void afterConfirmReply(QNetworkReply*);
     void finishPost(QNetworkReply*);
 
@@ -38,7 +38,7 @@ private slots:
     void on_confirm_clicked();
     void on_changeItem_clicked();
 
-private:
+protected:
     void addOneItem(OneItem item);
     void setOrder(OneOrder order);
     //void postOn(QJsonObject json);
@@ -49,6 +49,8 @@ private:
     OneOrder* theOrder = nullptr;
     QPushButton* confirm;
     Messenger* messenger;
+
+private:
     Ui::NewOrder* ui;
 };
 

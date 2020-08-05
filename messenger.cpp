@@ -69,6 +69,21 @@ void Messenger::finishOneOrder(int orderID)
 
     postON(json, QString("/finishorder")); //uri
 }
+void Messenger::finishResOrder(int orderID)
+{
+    QJsonObject json;
+    QJsonObject orderInf;
+    QJsonObject userInf;
+    userInf.insert("username", thisUser.username);
+    userInf.insert("password", thisUser.password);
+
+    orderInf.insert("id", QJsonValue(orderID));
+
+    json.insert("userInformation", QJsonValue(userInf));
+    json.insert("orderInformation", QJsonValue(orderInf));
+
+    postON(json, QString("/finishorder")); //uri
+}
 
 void Messenger::newOrder(QJsonObject json)
 {
@@ -76,7 +91,15 @@ void Messenger::newOrder(QJsonObject json)
 }
 void Messenger::changeOrder(QJsonObject json)
 {
-    postON(json, QString("/changeorder"));
+    postON(json, QString("/change/forOrder"));
+}
+void Messenger::newResOrder(QJsonObject json)
+{
+    postON(json, QString("/new/forItemOrder"));
+}
+void Messenger::changeResOrder(QJsonObject json)
+{
+    postON(json, QString("/change/forItemOrder"));
 }
 
 //槽函数：

@@ -7,6 +7,7 @@
 #include "login.h"
 #include "maininclude.h"
 #include "neworder.h"
+#include "newitemorder.h"
 #include "usermanager.h"
 #include "messenger.h"
 #include <QMainWindow>
@@ -47,6 +48,7 @@ private slots:
     void againOrder();
 
     void finishPost(QNetworkReply* reply);
+    void on_newItemOrder();
     void on_about_me_triggered();
     void on_about_writer_triggered();
     void on_store_showAll_triggered();

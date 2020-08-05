@@ -94,7 +94,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>26</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="store">
@@ -123,7 +123,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="store_showAll">
    <property name="text">
-    <string>查看库存</string>
+    <string>库存管理</string>
    </property>
   </action>
   <action name="people_change">

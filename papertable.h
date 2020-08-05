@@ -1,8 +1,9 @@
-#ifndef PAPERTABLE_H
+﻿#ifndef PAPERTABLE_H
 #define PAPERTABLE_H
 
 #include "maininclude.h"
 #include "neworder.h"
+#include "newitemorder.h"
 #include <QWidget>
 
 namespace Ui {
@@ -18,6 +19,7 @@ public:
     int onwhich;
     void setOrderTitle();
     void setOrderVec(QVector<OneOrder>* _orders);
+    void setIsResOrder(bool isit=true);
     void clear();
     void setTitles(QStringList);
     void flush();
@@ -28,16 +30,12 @@ signals:
     void finishFlush();
 
 private slots:
-    void on_buttonLastPaper_clicked();
-
-    void on_buttonJumpTo_clicked();
-
-    void on_buttonNextPaper_clicked();
-
-    void on_buttonFlush_clicked();
-
     void afterFlush();
 
+    void on_buttonLastPaper_clicked();
+    void on_buttonJumpTo_clicked();
+    void on_buttonNextPaper_clicked();
+    void on_buttonFlush_clicked();
     void on_Table_cellDoubleClicked(int row, int column);
 
 private:
@@ -46,6 +44,7 @@ private:
     int colCnt;
     int currentPage;
     int onePageRows;
+    bool isResOrder;
     Ui::PaperTable* ui;
     QVector<OneOrder>* orders;
     QStringList orderSL;

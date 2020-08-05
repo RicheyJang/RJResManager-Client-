@@ -191,7 +191,7 @@ void NewOrder::on_changeItem_clicked()
     ui->nameBox->setCurrentText(name);
     ui->typeBox->setCurrentText(type);
     ui->numEdit->setText(num);
-    ui->moreEdit->setText(more);
+    ui->itemMoreEdit->setText(more);
 
     int rowCnt = ui->itemTable->rowCount();
     ui->itemTable->removeRow(row);

@@ -11,6 +11,7 @@ class HintComboBox : public QComboBox {
 public:
     HintComboBox(QWidget* parent = nullptr);
     void setStringList(QStringList sl);
+    void setNotMustHint(bool isNotMust=true);
 
 public slots:
     void showHint();
@@ -23,6 +24,7 @@ private:
     void selectOne();
     HintList* list;
     QStringList items;
+    bool isMustHint;
 };
 
 #endif // HINTCOMBOBOX_H

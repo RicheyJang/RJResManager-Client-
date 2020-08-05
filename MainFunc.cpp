@@ -123,6 +123,55 @@ bool formOrders(QString MainSql, QString itemMainSql, QString whereSql, QVector<
     std::sort(orders.begin(), orders.end());
     return true;
 }
+bool formResOrders(QString MainSql, QString itemMainSql, QString whereSql, QVector<OneOrder>& orders)
+{
+    orders.clear();
+    Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+    if (!base->check())
+        return false;
+    QSqlDatabase database = base->getDatabase();
+    QSqlQuery query(database);
+    QSqlQuery itemQuery(database);
+    if (MainSql == nullptr)
+        MainSql = "select id,starttime,more,teacher,admin,keeper,status from orders";
+    if (itemMainSql == nullptr)
+        itemMainSql = "select pid,isNew,res,name,type,cnt,units,status,more from newitems";
+    QString sql = MainSql + " where " + whereSql + ";";
+    //qDebug() << sql;
+    if (!query.exec(sql))
+        return false;
+    while (query.next()) {
+        OneOrder* order = new OneOrder;
+        order->id = query.value(0).toInt();
+        order->starttime = query.value(1).toDate();
+        order->more = query.value(2).toString();
+        order->teacher = query.value(3).toString();
+        order->admin = query.value(4).toString();
+        order->keeper = query.value(5).toString();
+        order->status = query.value(6).toString();
+        sql = itemMainSql + " where orderid=" + QString::number(order->id);
+        //qDebug() << sql;
+        itemQuery.exec(sql);
+        while (itemQuery.next()) {
+            OneNewItem item;
+            item.pid = itemQuery.value(0).toInt();
+            item.isNew = itemQuery.value(1).toBool();
+            item.res = itemQuery.value(2).toString();
+            item.name = itemQuery.value(3).toString();
+            item.type = itemQuery.value(4).toString();
+            item.number = itemQuery.value(5).toDouble();
+            item.units = itemQuery.value(6).toString();
+            item.status = itemQuery.value(7).toString();
+            item.more = itemQuery.value(8).toString();
+            order->newItems.push_back(item);
+        }
+        orders.push_back(*order);
+    }
+    base->close();
+    delete base;
+    std::sort(orders.begin(), orders.end());
+    return true;
+}
 /*-----------sql查询相关end---------------*/
 
 /*--------------初始化相关---------------*/
@@ -130,10 +179,11 @@ bool initNewItems()
 {
     //TODO 入库订单读取待写
     QVector<int> tmp;
-    tmp.push_back(1);
-    tmp.push_back(3);
+    tmp.push_back(5);
+    tmp.push_back(7);
     QString sql = getOrderSql(ONDealOrder, tmp);
-    return formOrders(nullptr, nullptr, sql, newitems);
+    bool res = formResOrders(nullptr, nullptr, sql, dealResOrders);
+    return res;
 }
 
 bool initDealOrders()
@@ -150,6 +200,9 @@ bool initNowOrders()
     QVector<int> tmp;
     tmp.push_back(1);
     tmp.push_back(3);
+    tmp.push_back(5);
+    tmp.push_back(6);
+    tmp.push_back(7);
     QString sql = getOrderSql(ONNowOrder, tmp);
     return formOrders(nullptr, nullptr, sql, noworders);
 }
@@ -185,11 +238,23 @@ bool flushDealOrders(QDate start, QDate end) //刷新待处理订单
     bool res = formOrders(nullptr, nullptr, sql, dealorders);
     return res;
 }
+bool flushDealResOrders(QDate start, QDate end) //刷新待处理订单
+{
+    QVector<int> tmp;
+    tmp.push_back(5);
+    tmp.push_back(7);
+    QString sql = getOrderSql(ONDealOrder, tmp, start, end);
+    bool res = formResOrders(nullptr, nullptr, sql, dealResOrders);
+    return res;
+}
 bool flushNowOrders(QDate start, QDate end) //刷新当前订单
 {
     QVector<int> tmp;
     tmp.push_back(1);
     tmp.push_back(3);
+    tmp.push_back(5);
+    tmp.push_back(6);
+    tmp.push_back(7);
     QString sql = getOrderSql(ONNowOrder, tmp, start, end);
     bool res = formOrders(nullptr, nullptr, sql, noworders);
     return res;
@@ -210,7 +275,7 @@ OneOrder* getOrder(int id, QVector<OneOrder>& orders) //按id查找订单order
     OneOrder order;
     order.id = id;
     QVector<OneOrder>::iterator it = std::lower_bound(orders.begin(), orders.end(), order);
-    if (it == noworders.end() || it->id != id) {
+    if (it == orders.end() || it->id != id) {
         return nullptr;
     }
     return &(*it);
@@ -275,6 +340,10 @@ int getResItemPid(QString res, QString name, QString type) //获取物品的pid
 OneResItem getResItem(int pid) //按pid获取到物品
 {
     return resItemsTrie.find(pid);
+}
+OneResItem getResItemByName(QString res, QString name, QString type) //按名称获取到物品
+{
+    return resItemsTrie.find(res, name, type);
 }
 QString getUnits(QString res, QString name, QString type) //获取物品的单位
 {
@@ -473,6 +542,12 @@ QString toSHA256(QString s)
     return res;
 }
 /*--------安全相关end-------------*/
+
+bool askForConferm(QString text)
+{
+    QMessageBox::StandardButton res = QMessageBox::question(nullptr, QString("确定？"), text);
+    return res == QMessageBox::Yes;
+}
 
 /*----------配置文件相关-----------*/
 Config::Config(QString filename)

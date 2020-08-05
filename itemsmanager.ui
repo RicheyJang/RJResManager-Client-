@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="OutItem">
        <attribute name="title">
@@ -44,11 +44,27 @@
        <attribute name="title">
         <string>待处理账目</string>
        </attribute>
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0">
+         <widget class="PaperTable" name="table_dealOrder" native="true"/>
+        </item>
+        <item row="1" column="0">
+         <layout class="QHBoxLayout" name="buttomLayout"/>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
         <string>历史账目</string>
        </attribute>
+       <layout class="QGridLayout" name="gridLayout_5">
+        <item row="0" column="0">
+         <widget class="PaperTable" name="table_hisOrder" native="true"/>
+        </item>
+        <item row="1" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_2"/>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
@@ -66,6 +82,14 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PaperTable</class>
+   <extends>QWidget</extends>
+   <header location="global">papertable.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -15,6 +15,12 @@ NewItemOrder::NewItemOrder(QWidget* parent)
     titles << QString("pid") << QString("品类") << QString("名称") << QString("型号") << QString("数量") << QString("备注");
     ui->itemTable->setHorizontalHeaderLabels(titles);
     flushBox(1);
+    messenger=new Messenger();
+    connect(messenger,&Messenger::gotResponse,this,&NewItemOrder::afterConfirmReply);
+
+    ui->resBox->setNotMustHint(true);
+    ui->nameBox->setNotMustHint(true);
+    ui->typeBox->setNotMustHint(true);
 }
 
 NewItemOrder::~NewItemOrder()
@@ -22,20 +28,20 @@ NewItemOrder::~NewItemOrder()
     delete ui;
 }
 
-void NewItemOrder::setOrder(OneOrder order)
+void NewItemOrder::setOrder(OneResOrder order)
 {
-    for (OneItem item : order.items) {
+    for (OneNewItem item : order.newItems) {
         addOneItem(item);
     }
     ui->moreEdit->setText(order.more);
 }
 
-void NewItemOrder::setModel(OneOrder order)
+void NewItemOrder::setModel(OneResOrder order)
 {
     setOrder(order);
 }
 
-void NewItemOrder::changeOrder(OneOrder* order) //修改订单 窗口
+void NewItemOrder::changeOrder(OneResOrder* order) //修改订单 窗口
 {
     dowhat = ONCHANGEORDER;
     theOrder = order;
@@ -43,8 +49,19 @@ void NewItemOrder::changeOrder(OneOrder* order) //修改订单 窗口
     QString title = QString("修改账目 编号：") + QString::number(order->id);
     setWindowTitle(title);
 }
-
-void NewItemOrder::showOrder(OneOrder order) //展示订单 窗口
+bool NewItemOrder::showOrder(int id) //展示订单 窗口
+{
+    QVector<OneResOrder>& orders=dealResOrders;
+    OneResOrder order;
+    order.id = id;
+    QVector<OneResOrder>::iterator it = std::lower_bound(orders.begin(), orders.end(), order);
+    if (it == orders.end() || it->id != id) {
+        return false;
+    }
+    showOrder(*it);
+    return true;
+}
+void NewItemOrder::showOrder(OneResOrder order) //展示订单 窗口
 {
     dowhat = ONSHOWORDER;
     QLayoutItem* child;
@@ -73,20 +90,14 @@ void NewItemOrder::showOrder(OneOrder order) //展示订单 窗口
 }
 
 /*----------辅助函数--------------*/
-void NewItemOrder::addOneItem(OneItem item)
+void NewItemOrder::addOneItem(OneNewItem item)
 {
     QString pids=QString::number(item.pid);
     QTableWidgetItem* pid = new QTableWidgetItem(pids);
-
-    OneResItem tmp = getResItem(item.pid);
-    if(tmp.pid==0 || tmp.pid!=item.pid)
-    {
-
-    }
-    QTableWidgetItem* res = new QTableWidgetItem(tmp.res);
-    QTableWidgetItem* name = new QTableWidgetItem(tmp.name);
-    QTableWidgetItem* type = new QTableWidgetItem(tmp.type);
-    QString u = QString::number(item.number) + " " + tmp.units;
+    QTableWidgetItem* res = new QTableWidgetItem(item.res);
+    QTableWidgetItem* name = new QTableWidgetItem(item.name);
+    QTableWidgetItem* type = new QTableWidgetItem(item.type);
+    QString u = QString::number(item.number) + " " + item.units;
     QTableWidgetItem* num = new QTableWidgetItem(u);
     QTableWidgetItem* more = new QTableWidgetItem(item.more);
 
@@ -139,15 +150,23 @@ void NewItemOrder::on_addItem_clicked()
     QString res = ui->resBox->currentText();
     QString name = ui->nameBox->currentText();
     QString type = ui->typeBox->currentText();
-    int pid = getResItemPid(res, name, type);
-    /*if (pid == 0) {
-        QMessageBox::information(nullptr, QString("错误"), QString("查无此物，请正确填入物品信息"));
+    QString units = ui->unitsEdit->text();
+    if(res.length()<=0 || name.length()<=0 || type.length()<=0 || units.length()<=0)
+    {
+        QMessageBox::information(nullptr, QString("错误"), QString("请正确填入物品信息"));
         return;
-    }*/
-    OneItem item;
+    }
+
+    OneNewItem item;
+    int pid = getResItemPid(res, name, type);
+    item.isNew=pid==0;
     item.pid = pid;
     item.number = num;
     item.more = ui->itemMoreEdit->text();
+    item.res=res;
+    item.name=name;
+    item.type=type;
+    item.units=units;
     addOneItem(item);
 }
 
@@ -158,12 +177,14 @@ void NewItemOrder::on_changeItem_clicked()
     QString name = ui->itemTable->item(row, 2)->text();
     QString type = ui->itemTable->item(row, 3)->text();
     QString num = ui->itemTable->item(row, 4)->text().split(" ")[0];
+    QString units = ui->itemTable->item(row, 4)->text().split(" ")[1];
     QString more = ui->itemTable->item(row, 5)->text();
     ui->resBox->setCurrentText(res);
     ui->nameBox->setCurrentText(name);
     ui->typeBox->setCurrentText(type);
     ui->numEdit->setText(num);
-    ui->moreEdit->setText(more);
+    ui->itemMoreEdit->setText(more);
+    ui->unitsEdit->setText(units);
 
     int rowCnt = ui->itemTable->rowCount();
     ui->itemTable->removeRow(row);
@@ -192,7 +213,7 @@ void NewItemOrder::on_typeBox_currentTextChanged(const QString& arg1)
 {
     QString u = getUnits(ui->resBox->currentText(), ui->nameBox->currentText(), ui->typeBox->currentText());
     if (u != nullptr) {
-        ui->unitsEdit->setText(QString("单位(") + u + ")");
+        ui->unitsEdit->setText(u);
     }
 }
 
@@ -216,11 +237,18 @@ void NewItemOrder::on_confirm_clicked()
     int row = ui->itemTable->rowCount();
     for (int i = 0; i < row; i++) {
         QJsonObject item;
-        item.insert("pid", QJsonValue(ui->itemTable->item(i, 0)->text().toInt()));
+        int pid=ui->itemTable->item(i, 0)->text().toInt();
+        int tmpNew=(pid==0)? 1 : 0;
+        item.insert("isNew",QJsonValue(tmpNew));
+        item.insert("pid", QJsonValue(pid));
+        item.insert("res", QJsonValue(ui->itemTable->item(i, 1)->text()));
+        item.insert("name", QJsonValue(ui->itemTable->item(i, 2)->text()));
+        item.insert("type", QJsonValue(ui->itemTable->item(i, 3)->text()));
         QString s = ui->itemTable->item(i, 4)->text().split(" ")[0];
         item.insert("cnt", QJsonValue(s.toDouble()));
+        s = ui->itemTable->item(i, 4)->text().split(" ")[1];
+        item.insert("units", QJsonValue(s));
         item.insert("more", QJsonValue(ui->itemTable->item(i, 5)->text()));
-        //qDebug() << item.value("cnt");
         items.append(QJsonValue(item));
     }
     if (row == 0) {
@@ -233,7 +261,13 @@ void NewItemOrder::on_confirm_clicked()
     json.insert("orderInformation", QJsonValue(orderInf));
     json.insert("itemsInformation", QJsonValue(items));
 
-    postOn(json);
+    if (dowhat == ONADDNEWORDER)
+        messenger->newResOrder(json);
+    else if (dowhat == ONCHANGEORDER)
+        messenger->changeResOrder(json);
+    else
+        return;
+    ui->confirm->setDisabled(true);
 }
 
 void NewItemOrder::on_cancel_clicked()
@@ -246,50 +280,20 @@ void NewItemOrder::on_cancel_clicked()
 /*-------按钮响应end-------*/
 
 /*-------上传函数-------*/
-void NewItemOrder::postOn(QJsonObject json)
-{
-    QString Ptype;
-    if (dowhat == ONADDNEWORDER)
-        Ptype = QString("/NewItemOrder");
-    else if (dowhat == ONCHANGEORDER)
-        Ptype = QString("/changeorder");
-    else
-        return;
-
-    QJsonDocument document;
-    document.setObject(json);
-
-    QByteArray data = document.toJson(QJsonDocument::Indented);
-
-    QNetworkAccessManager* manager = new QNetworkAccessManager();
-    QNetworkRequest* request = new QNetworkRequest;
-    request->setHeader(QNetworkRequest::UserAgentHeader, config.UserAgent);
-    request->setHeader(QNetworkRequest::ContentTypeHeader, "application/json"); //上面语句固定这么写，要不然会报错“contest—type is missing”
-    //request.setRawHeader("XXX3", "XXX4");
-
-    QString url = QString("http://") + config.ip + ':' + QString::number(config.serverPort) + Ptype;
-    request->setUrl(QUrl(url));
-
-    manager->post(*request, data);
-    connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(finishPost(QNetworkReply*)));
-    connect(manager, &QNetworkAccessManager::finished, manager, &QNetworkAccessManager::deleteLater);
-    delete request;
-    request = nullptr;
-}
-
-void NewItemOrder::finishPost(QNetworkReply* reply)
+void NewItemOrder::afterConfirmReply(QNetworkReply* reply)
 {
     if (reply->error() == QNetworkReply::NoError) {
         if (dowhat == ONADDNEWORDER)
-            QMessageBox::information(nullptr, QString("完成"), QString("发起订单成功"));
+            QMessageBox::information(nullptr, QString("完成"), QString("发起账目成功"));
         else
-            QMessageBox::information(nullptr, QString("完成"), QString("修改订单成功"));
+            QMessageBox::information(nullptr, QString("完成"), QString("修改账目成功"));
         reply->deleteLater();
         this->close();
         emit finishChange();
     } else {
         QMessageBox::warning(nullptr, QString("错误"), QString("失败，请稍后重试"));
         reply->deleteLater();
+        ui->confirm->setDisabled(false);
     }
 }
 /*-------上传函数end-------*/

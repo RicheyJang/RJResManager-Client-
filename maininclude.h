@@ -114,14 +114,25 @@ public:
     QString status;
     QString more;
 };
+struct OneNewItem {
+public:
+    int pid;
+    double number;
+    bool isNew;
+    QString status;
+    QString more;
+    QString res;
+    QString name;
+    QString type;
+    QString units;
+};
 struct OneOrder {
 public:
     int id;
     QVector<OneItem> items;
+    QVector<OneNewItem> newItems;
     QString workshop;
     QString useclass;
-    QDate starttime;
-    QDateTime usetime;
     QString more;
     QString teacher;
     QString header;
@@ -129,11 +140,15 @@ public:
     QString keeper;
     QString accountant;
     QString status;
+    QDate starttime;
+    QDateTime usetime;
     bool operator<(const OneOrder a) const
     {
         return id < a.id;
     }
 };
+typedef OneOrder OneResOrder;
+
 struct User {
 public:
     int id;
@@ -160,7 +175,7 @@ public:
 extern QVector<OneOrder> dealorders;
 extern QVector<OneOrder> noworders;
 extern QVector<OneOrder> historys;
-extern QVector<OneOrder> newitems;
+extern QVector<OneResOrder> dealResOrders;
 //extern QSet<OneResItem> allResItem;
 extern User thisUser;
 extern Config config;
@@ -175,6 +190,7 @@ bool initNewItems();
 bool initSatus();
 
 bool flushDealOrders(QDate start, QDate end);
+bool flushDealResOrders(QDate start, QDate end);
 bool flushNowOrders(QDate start, QDate end);
 bool flushHistoryOrders(QDate start, QDate end);
 OneOrder* getOrder(int id, QVector<OneOrder>& orders);
@@ -195,6 +211,8 @@ bool regCheck(QString reg, QString s);
 bool orderCheck(OneOrder order);
 
 QString toSHA256(QString s);
+
+bool askForConferm(QString text);
 /*函数定义结束*/
 
 #endif // MAININCLUDE_H

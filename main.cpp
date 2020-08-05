@@ -9,11 +9,11 @@ ResItemsTrie resItemsTrie;
 QVector<OneOrder> dealorders;
 QVector<OneOrder> noworders;
 QVector<OneOrder> historys;
-QVector<OneOrder> newitems;
+QVector<OneResOrder> dealResOrders;
 User thisUser;
 Config config("./config.ini");
 
-/*
+/* 免登录，测试所用
 int main(int argc, char* argv[])
 {
     QApplication a(argc, argv);

@@ -15,6 +15,7 @@ PaperTable::PaperTable(QWidget* parent)
     ui->dateStart->setDate(config.orderStartDay);
     ui->dateEnd->setDate(QDate::currentDate());
     connect(this, &PaperTable::finishFlush, this, &PaperTable::afterFlush);
+    setIsResOrder(false);
     clear();
 }
 
@@ -81,6 +82,19 @@ void PaperTable::flush()
 /*-------外界函数end---------*/
 
 /*-------表格整理函数-----------*/
+void PaperTable::setIsResOrder(bool isit)
+{
+    isResOrder=isit;
+    if(isit)
+    {
+        orderSL.clear();
+        orderSL << QString("编号") << QString("发起日期") << QString("状态")
+                << QString("备注") << QString("所含物品") << QString("实习科长")
+                << QString("仓库管理员");
+        setTitles(orderSL);
+    }
+}
+
 void PaperTable::setTitles(QStringList sl)
 {
     colCnt = sl.count();
@@ -131,28 +145,49 @@ bool PaperTable::turnToPage(int index)
     int k = 0;
     for (int i = st; i <= ed; i++, k++) {
         const OneOrder* order = &(orders->at(i));
-        ui->Table->item(k, 0)->setText(QString::number(order->id));
-        ui->Table->item(k, 1)->setText(order->starttime.toString("yyyy/MM/dd"));
-        ui->Table->item(k, 2)->setText(order->useclass);
-        ui->Table->item(k, 3)->setText(order->workshop);
-        ui->Table->item(k, 4)->setText(order->status);
-        ui->Table->item(k, 5)->setText(order->more);
-        QString s = "";
-        for (int j = 0; j < qMin(3, order->items.size()); j++) {
-            OneResItem type = getResItem(order->items.at(j).pid);
-            if (type.pid == 0)
-                continue;
-            s = s + type.name + "(" + type.type + ") ";
+        if(!isResOrder)
+        {
+            ui->Table->item(k, 0)->setText(QString::number(order->id));
+            ui->Table->item(k, 1)->setText(order->starttime.toString("yyyy/MM/dd"));
+            ui->Table->item(k, 2)->setText(order->useclass);
+            ui->Table->item(k, 3)->setText(order->workshop);
+            ui->Table->item(k, 4)->setText(order->status);
+            ui->Table->item(k, 5)->setText(order->more);
+            QString s = "";
+            for (int j = 0; j < qMin(3, order->items.size()); j++) {
+                OneResItem type = getResItem(order->items.at(j).pid);
+                if (type.pid == 0)
+                    continue;
+                s = s + type.name + "(" + type.type + ") ";
+            }
+            if (order->items.size() == 0)
+                s = QString("无物品");
+            else
+                s = s + QString("等");
+            ui->Table->item(k, 6)->setText(s);
+            ui->Table->item(k, 7)->setText(order->teacher);
+            ui->Table->item(k, 8)->setText(order->header);
+            ui->Table->item(k, 9)->setText(order->admin);
+            ui->Table->item(k, 10)->setText(order->keeper);
         }
-        if (order->items.size() == 0)
-            s = QString("无物品");
         else
-            s = s + QString("等");
-        ui->Table->item(k, 6)->setText(s);
-        ui->Table->item(k, 7)->setText(order->teacher);
-        ui->Table->item(k, 8)->setText(order->header);
-        ui->Table->item(k, 9)->setText(order->admin);
-        ui->Table->item(k, 10)->setText(order->keeper);
+        {
+            ui->Table->item(k, 0)->setText(QString::number(order->id));
+            ui->Table->item(k, 1)->setText(order->starttime.toString("yyyy/MM/dd"));
+            ui->Table->item(k, 2)->setText(order->status);
+            ui->Table->item(k, 3)->setText(order->more);
+            QString s = "";
+            for (int j = 0; j < qMin(3, order->newItems.size()); j++) {
+                s = s + order->newItems.at(j).name + "(" + order->newItems.at(j).type + ") ";
+            }
+            if (order->items.size() == 0)
+                s = QString("无物品");
+            else
+                s = s + QString("等");
+            ui->Table->item(k, 4)->setText(s);
+            ui->Table->item(k, 5)->setText(order->admin);
+            ui->Table->item(k, 6)->setText(order->keeper);
+        }
     }
     currentPage = index + 1;
     ui->editPaper->setText(QString::number(currentPage));
@@ -185,12 +220,24 @@ void PaperTable::on_buttonFlush_clicked()
     ui->buttonFlush->setDisabled(true);
     QDate start = ui->dateStart->date();
     QDate end = ui->dateEnd->date();
-    if (onwhich == ONNowOrder)
-        flushNowOrders(start, end);
-    else if (onwhich == ONHistory)
-        flushHistoryOrders(start, end);
+    if(!isResOrder)
+    {
+        if (onwhich == ONNowOrder)
+            flushNowOrders(start, end);
+        else if (onwhich == ONHistory)
+            flushHistoryOrders(start, end);
+        else
+            flushDealOrders(start, end);
+    }
     else
-        flushDealOrders(start, end);
+    {
+        if (onwhich == ONHistory)
+        {
+            //TODO flushHistoryOrders(start, end);
+        }
+        else
+            flushDealResOrders(start, end);
+    }
     emit finishFlush();
 }
 
@@ -199,15 +246,26 @@ void PaperTable::on_Table_cellDoubleClicked(int row, int column)
     int id = getCurrentID();
     if (id == 0)
         return;
-    OneOrder* order = getOrder(id, dealorders);
-    if (order == nullptr)
-        order = getOrder(id, noworders);
-    if (order == nullptr)
-        order = getOrder(id, historys);
-    if (order == nullptr)
-        return;
-    NewOrder* newOrder = new NewOrder();
-    newOrder->showOrder(*order);
-    newOrder->show();
+    if(!isResOrder)
+    {
+        OneOrder* order = getOrder(id, dealorders);
+        if (order == nullptr)
+            order = getOrder(id, noworders);
+        if (order == nullptr)
+            order = getOrder(id, historys);
+        if (order == nullptr)
+            return;
+        NewOrder* newOrder = new NewOrder();
+        newOrder->showOrder(*order);
+        newOrder->show();
+    }
+    else
+    {
+        NewItemOrder* nio=new NewItemOrder();
+        if(nio->showOrder(id))
+            nio->show();
+        else
+            delete nio;
+    }
 }
 /*-------按钮响应函数end----------*/

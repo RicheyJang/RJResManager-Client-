@@ -14,9 +14,15 @@ HintComboBox::HintComboBox(QWidget* parent)
     setStringList(items);
     list = new HintList(parent);
     list->hide();
+    isMustHint=true;
     setView(new QListView());
     connect(this->lineEdit(), &QLineEdit::textEdited, this, &HintComboBox::showHint);
     connect(list, &QListWidget::itemClicked, this, &HintComboBox::selectOne);
+}
+
+void HintComboBox::setNotMustHint(bool isNotMust)
+{
+    isMustHint=!isNotMust;
 }
 
 void HintComboBox::selectOne()
@@ -29,34 +35,37 @@ void HintComboBox::selectOne()
 void HintComboBox::flushList()
 {
     list->clear();
-    //    for (int i = 1; i <= 50; i++) {
-    //        list->addItem(QString::number(i));
-    //    }
     QString key = this->currentText();
     for (QString s : items) {
         if (s.contains(key)) {
             list->addItem(s);
         }
     }
-    if (list->count() <= 0)
+    if (isMustHint && list->count() <= 0)
         list->addItem(QString("无结果"));
 }
 
 void HintComboBox::showHint()
 {
     flushList();
-    if (list->isHidden()) {
-        int x = this->x() + 4;
-        int y = this->y() + this->height();
-        int w = this->width();
-        int h = 100;
-        list->setGeometry(x, y, w, h);
-        list->setCurrentRow(0);
-        list->show();
-    }
-    list->raise();
-    if (this->currentText().compare(list->item(0)->text()) == 0) {
+    if(!isMustHint && (list->count())<=0){
         list->hide();
+    }
+    else
+    {
+        if (list->isHidden()) {
+            int x = this->x() + 4;
+            int y = this->y() + this->height();
+            int w = this->width();
+            int h = 100;
+            list->setGeometry(x, y, w, h);
+            list->setCurrentRow(0);
+            list->show();
+        }
+        list->raise();
+        if (this->currentText().compare(list->item(0)->text()) == 0) {
+            list->hide();
+        }
     }
 }
 
