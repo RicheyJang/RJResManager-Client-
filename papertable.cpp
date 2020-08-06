@@ -180,7 +180,7 @@ bool PaperTable::turnToPage(int index)
             for (int j = 0; j < qMin(3, order->newItems.size()); j++) {
                 s = s + order->newItems.at(j).name + "(" + order->newItems.at(j).type + ") ";
             }
-            if (order->items.size() == 0)
+            if (order->newItems.size() == 0)
                 s = QString("无物品");
             else
                 s = s + QString("等");

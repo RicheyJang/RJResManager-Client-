@@ -21,6 +21,7 @@ private slots:
 
     bool changeToByID(QString dowhat, int i);
     void finishPost(QNetworkReply* reply);
+    void afterFinish();
     void afterChange();
     void agreeAdmin();
     void disagreeAdmin();

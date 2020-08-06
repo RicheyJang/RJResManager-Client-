@@ -10,6 +10,7 @@ NewOrder::NewOrder(QWidget* parent)
     setAttribute(Qt::WA_DeleteOnClose, true);
     messenger=new Messenger();
 
+    initResItems();
     ui->itemTable->setColumnCount(6);
     QStringList titles;
     titles << QString("pid") << QString("品类") << QString("名称") << QString("型号") << QString("数量") << QString("备注");

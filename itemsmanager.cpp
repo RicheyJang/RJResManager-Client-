@@ -14,14 +14,12 @@ ItemsManager::ItemsManager(QWidget* parent)
     QTableWidget* tab = ui->table_Out;
     tab->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     tab->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    tab->setSelectionMode(QAbstractItemView::NoSelection);
     tab->setFocusPolicy(Qt::NoFocus);
     tab->setEditTriggers(QAbstractItemView::NoEditTriggers);
     tab->setSortingEnabled(true);
     tab = ui->table_Rent;
     tab->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     tab->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    tab->setSelectionMode(QAbstractItemView::NoSelection);
     tab->setFocusPolicy(Qt::NoFocus);
     tab->setEditTriggers(QAbstractItemView::NoEditTriggers);
     tab->setSortingEnabled(true);
@@ -35,7 +33,7 @@ ItemsManager::ItemsManager(QWidget* parent)
     connect(messenger,&Messenger::gotResponse,this,&ItemsManager::finishPost);
     ui->table_dealOrder->setIsResOrder(true);
     ui->table_dealOrder->setOrderVec(&dealResOrders);
-    ui->table_hisOrder->setIsResOrder(true);
+    //ui->table_hisOrder->setIsResOrder(true);
 }
 
 ItemsManager::~ItemsManager()
@@ -51,8 +49,8 @@ void ItemsManager::on_tabWidget_currentChanged(int index)
         setTable(ui->table_Rent, config.itemsList[1]);
     else if(index==2)
         ui->table_dealOrder->flush();
-    else if(index==3)
-        ui->table_hisOrder->flush();
+    //else if(index==3)
+        //ui->table_hisOrder->flush();
 }
 
 void ItemsManager::setTable(QTableWidget* tab, QString res)
@@ -183,6 +181,7 @@ bool ItemsManager::changeStatus(int orderID, QString toStatus)
 void ItemsManager::finishPost(QNetworkReply* reply)
 {
     if (reply->error() == QNetworkReply::NoError) {
+        afterFinish();
         QMessageBox::information(nullptr, QString("完成"), QString("成功完成，请等待下一步"));
         reply->deleteLater();
         afterChange();
@@ -190,5 +189,9 @@ void ItemsManager::finishPost(QNetworkReply* reply)
         QMessageBox::warning(nullptr, QString("错误"), QString("失败，网络错误或无权操作\n请稍后重试或更换账号"));
         reply->deleteLater();
     }
+}
+void ItemsManager::afterFinish()
+{
+    initResItems();
 }
 /*---------数据上传函数end--------*/

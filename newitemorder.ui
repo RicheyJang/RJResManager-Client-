@@ -42,7 +42,7 @@
       <bool>true</bool>
      </attribute>
      <attribute name="verticalHeaderVisible">
-      <bool>true</bool>
+      <bool>false</bool>
      </attribute>
     </widget>
    </item>
@@ -259,7 +259,7 @@
    <item row="0" column="1" colspan="7">
     <layout class="QHBoxLayout" name="Layout_change">
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="button_readExcel">
        <property name="minimumSize">
         <size>
          <width>0</width>

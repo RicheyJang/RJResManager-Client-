@@ -35,6 +35,7 @@ private slots:
     void on_cancel_clicked();
     void on_confirm_clicked();
     void on_changeItem_clicked();
+    void on_button_readExcel_clicked();
 
 private:
     void addOneItem(OneNewItem item);

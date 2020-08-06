@@ -24,6 +24,7 @@
 #include <QDir>
 #include <QEvent>
 #include <QFile>
+#include <QFileDialog>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -51,6 +52,7 @@
 #include <qmath.h>
 #include <stack>
 #include <unordered_map>
+#include <xlsxdocument.h>
 /*----头文件结束---*/
 
 /*----结构声明-----*/
@@ -194,6 +196,7 @@ bool flushDealResOrders(QDate start, QDate end);
 bool flushNowOrders(QDate start, QDate end);
 bool flushHistoryOrders(QDate start, QDate end);
 OneOrder* getOrder(int id, QVector<OneOrder>& orders);
+bool getAllUsers(QVector<User>& users);
 
 bool initResItems();
 void addResItem(OneResItem atype, bool forCheck);

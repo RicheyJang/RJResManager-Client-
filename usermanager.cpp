@@ -23,24 +23,7 @@ UserManager::~UserManager()
 
 void UserManager::flushUsers()
 {
-    users.clear();
-    Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-    QSqlDatabase database = base->getDatabase();
-    QSqlQuery query(database);
-    query.exec("select id,username,truename,identity,workshop,isUseful from user;");
-    while (query.next()) {
-        User user;
-        user.id = query.value(0).toInt();
-        user.username = query.value(1).toString();
-        user.truename = query.value(2).toString();
-        user.identity = query.value(3).toString();
-        user.workshop = query.value(4).toString();
-        user.isUseful = query.value(5).toBool();
-        users.push_back(user);
-    }
-    base->close();
-    delete base;
-    std::sort(users.begin(), users.end());
+    getAllUsers(users);
     setTable();
 }
 

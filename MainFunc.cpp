@@ -177,7 +177,6 @@ bool formResOrders(QString MainSql, QString itemMainSql, QString whereSql, QVect
 /*--------------初始化相关---------------*/
 bool initNewItems()
 {
-    //TODO 入库订单读取待写
     QVector<int> tmp;
     tmp.push_back(5);
     tmp.push_back(7);
@@ -281,6 +280,31 @@ OneOrder* getOrder(int id, QVector<OneOrder>& orders) //按id查找订单order
     return &(*it);
 }
 
+bool getAllUsers(QVector<User>& users)
+{
+    users.clear();
+    Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+    if(base==nullptr || !base->check())
+        return false;
+    QSqlDatabase database = base->getDatabase();
+    QSqlQuery query(database);
+    if(!query.exec("select id,username,truename,identity,workshop,isUseful from user;"))
+        return false;
+    while (query.next()) {
+        User user;
+        user.id = query.value(0).toInt();
+        user.username = query.value(1).toString();
+        user.truename = query.value(2).toString();
+        user.identity = query.value(3).toString();
+        user.workshop = query.value(4).toString();
+        user.isUseful = query.value(5).toBool();
+        users.push_back(user);
+    }
+    base->close();
+    delete base;
+    std::sort(users.begin(), users.end());
+    return true;
+}
 /*----------物品相关函数----------*/
 uint qHash(const OneResItem key) //物品set的哈希映射
 {

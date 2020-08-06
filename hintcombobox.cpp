@@ -48,7 +48,7 @@ void HintComboBox::flushList()
 void HintComboBox::showHint()
 {
     flushList();
-    if(!isMustHint && (list->count())<=0){
+    if(!isMustHint && ((list->count())<=0 || this->currentText().size()==0) ){
         list->hide();
     }
     else

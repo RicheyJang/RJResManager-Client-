@@ -9,6 +9,8 @@ ErrorWidget::ErrorWidget(QWidget* parent)
     //设置标题栏隐藏
     this->setWindowFlags(Qt::FramelessWindowHint);
     //设置背景色透明
+    move(this->pos().x(),this->pos().y()+25);
+
     QPalette palette;
     QColor color(190, 230, 250);
     color.setAlphaF(0.6);

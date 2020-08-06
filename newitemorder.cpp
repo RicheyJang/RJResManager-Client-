@@ -14,6 +14,8 @@ NewItemOrder::NewItemOrder(QWidget* parent)
     QStringList titles;
     titles << QString("pid") << QString("品类") << QString("名称") << QString("型号") << QString("数量") << QString("备注");
     ui->itemTable->setHorizontalHeaderLabels(titles);
+
+    initResItems();
     flushBox(1);
     messenger=new Messenger();
     connect(messenger,&Messenger::gotResponse,this,&NewItemOrder::afterConfirmReply);
@@ -156,6 +158,20 @@ void NewItemOrder::on_addItem_clicked()
         QMessageBox::information(nullptr, QString("错误"), QString("请正确填入物品信息"));
         return;
     }
+    bool flag=false;
+    for(QString s : config.itemsList)
+    {
+        if(s==res)
+        {
+            flag=true;
+            break;
+        }
+    }
+    if(!flag)
+    {
+        QMessageBox::information(nullptr, QString("错误"), QString("不存在名为%0的物品类型").arg(res));
+        return;
+    }
 
     OneNewItem item;
     int pid = getResItemPid(res, name, type);
@@ -275,6 +291,58 @@ void NewItemOrder::on_cancel_clicked()
     QMessageBox::StandardButton result = QMessageBox::question(nullptr, QString("确定？"), QString("是否放弃本订单"));
     if (result == QMessageBox::Yes)
         this->close();
+    return;
+}
+void NewItemOrder::on_button_readExcel_clicked()
+{
+    QString filename=QFileDialog::getOpenFileName(nullptr, QString("选择文件"), "/", QString("Exel file(*.xlsx)"));
+    if(!(filename!=nullptr && filename.endsWith("xlsx")))
+        return ;
+    QXlsx::Document xlsxx(filename);
+    xlsxx.selectSheet("Sheet1");
+    QXlsx::CellRange range;
+    int rowCount = xlsxx.dimension().rowCount();//获取行数
+    int colCount = xlsxx.dimension().columnCount();
+    if(colCount!=6)
+    {
+        QMessageBox::warning(nullptr,QString("错误"),QString("文件格式有误，无法读取！"));
+        return;
+    }
+    OneNewItem item;
+
+    int pid,successNum=0,Num=rowCount-1;
+    for(int i = 2; i <= rowCount; i ++)
+    {
+        //qDebug()<<QString::number(i)<<xlsxx.read(i,1);
+        item.res=xlsxx.read(i,1).toString();
+        item.name=xlsxx.read(i,2).toString();
+        item.type=xlsxx.read(i,3).toString();
+        item.number=xlsxx.read(i,4).toDouble();
+        item.units=xlsxx.read(i,5).toString();
+        item.more=xlsxx.read(i,6).toString();
+        pid = getResItemPid(item.res, item.name, item.type);
+        item.isNew=pid==0;
+        item.pid = pid;
+
+        if (item.number <= 0) continue;
+        if(item.res.length()<=0 || item.name.length()<=0 || item.type.length()<=0 || item.units.length()<=0)
+            continue;
+        bool flag=false;
+        for(QString s : config.itemsList)
+        {
+            if(s==item.res)
+            {
+                flag=true;
+                break;
+            }
+        }
+        if(!flag)
+            continue;
+
+        addOneItem(item);
+        successNum++;
+    }
+    QMessageBox::information(nullptr,QString("完成"),QString("成功导入%0个，失败%1个").arg(successNum).arg(Num-successNum));
     return;
 }
 /*-------按钮响应end-------*/
