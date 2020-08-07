@@ -305,6 +305,17 @@ bool getAllUsers(QVector<User>& users)
     std::sort(users.begin(), users.end());
     return true;
 }
+
+User* getUserByID(int userID,QVector<User> *users)
+{
+    User user;
+    user.id=userID;
+    QVector<User>::iterator it = std::lower_bound(users->begin(), users->end(), user);
+    if (it == users->end() || it->id != userID) {
+        return nullptr;
+    }
+    return &(*it);
+}
 /*----------物品相关函数----------*/
 uint qHash(const OneResItem key) //物品set的哈希映射
 {
@@ -608,7 +619,11 @@ Config::Config(QString filename)
                << QString("待一级审核") << QString("一审不通过") << QString("待二级审核") << QString("二审不通过")
                << QString("审核通过(待出库)") << QString("已出库") << QString("仓库无法完成") << QString("已完成");
     itemsList << QString("耗材类") << QString("租赁类");
+    userIdentityList << QString("teacher") << QString("header") << QString("admin") << QString("keeper");
+    userCNIdentityList << QString("教师") << QString("主任") << QString("科长") << QString("仓库管理员");
     itemStartWith[0] = '1';
     itemStartWith[1] = '2';
+    MaxItemMoreSize=25;
+    MaxOrderMoreSize=45;
 }
 /*----------配置文件相关end---------*/

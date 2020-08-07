@@ -101,6 +101,10 @@ void Messenger::changeResOrder(QJsonObject json)
 {
     postON(json, QString("/change/forItemOrder"));
 }
+void Messenger::changeUser(User afUser)
+{
+    //TODO 修改用户
+}
 
 //槽函数：
 void Messenger::finishPost()

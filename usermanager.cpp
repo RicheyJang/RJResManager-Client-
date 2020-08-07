@@ -1,14 +1,18 @@
 #include "usermanager.h"
 #include "ui_usermanager.h"
+#include "userdialog.h"
 
 UserManager::UserManager(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::UserManager)
 {
     ui->setupUi(this);
+    setAttribute(Qt::WA_QuitOnClose, false);
+    setAttribute(Qt::WA_DeleteOnClose, true);
+
     ui->table_User->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->table_User->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    ui->table_User->setFocusPolicy(Qt::NoFocus);
+    //ui->table_User->setFocusPolicy(Qt::NoFocus);
     ui->table_User->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->table_User->setSortingEnabled(true);
 
@@ -48,4 +52,18 @@ void UserManager::setTable()
         else
             tab->setItem(cnt - 1, 5, new QTableWidgetItem(QString("不可用")));
     }
+}
+
+void UserManager::on_table_User_cellDoubleClicked(int row, int column)
+{
+    int id=ui->table_User->item(row,0)->text().toInt();
+    if(id==0)
+        return;
+
+    User *user=getUserByID(id,&users);
+    if(user==nullptr)
+        return;
+
+    UserDialog* UD=new UserDialog(*user);
+    UD->show();
 }

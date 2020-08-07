@@ -108,7 +108,7 @@ void NewItemOrder::addOneItem(OneNewItem item)
     name->setFlags(name->flags() & (~Qt::ItemIsEditable));
     type->setFlags(type->flags() & (~Qt::ItemIsEditable));
     num->setFlags(num->flags() & (~Qt::ItemIsEditable));
-    more->setFlags(Qt::ItemIsEnabled | Qt::ItemIsEditable);
+    more->setFlags(more->flags() & (~Qt::ItemIsEditable));
 
     int row = ui->itemTable->rowCount();
     ui->itemTable->setRowCount(row + 1);
@@ -172,7 +172,11 @@ void NewItemOrder::on_addItem_clicked()
         QMessageBox::information(nullptr, QString("错误"), QString("不存在名为%0的物品类型").arg(res));
         return;
     }
-
+    if(ui->itemMoreEdit->text().size()>=config.MaxItemMoreSize)
+    {
+        QMessageBox::information(nullptr, QString("错误"), QString("备注过长，请勿超过%0个字").arg(config.MaxItemMoreSize));
+        return;
+    }
     OneNewItem item;
     int pid = getResItemPid(res, name, type);
     item.isNew=pid==0;
@@ -247,6 +251,11 @@ void NewItemOrder::on_confirm_clicked()
         orderInf.insert("id", QJsonValue(theOrder->id));
     if (dowhat == ONADDNEWORDER)
         orderInf.insert("starttime", QJsonValue(QDate::currentDate().toString("yyyy-MM-dd")));
+    if(ui->moreEdit->toPlainText().size()>=config.MaxOrderMoreSize)
+    {
+        QMessageBox::information(nullptr, QString("错误"), QString("备注过长，请勿超过%0个字").arg(config.MaxOrderMoreSize));
+        return;
+    }
     orderInf.insert("more", QJsonValue(ui->moreEdit->toPlainText()));
 
     QJsonArray items;
@@ -326,6 +335,8 @@ void NewItemOrder::on_button_readExcel_clicked()
 
         if (item.number <= 0) continue;
         if(item.res.length()<=0 || item.name.length()<=0 || item.type.length()<=0 || item.units.length()<=0)
+            continue;
+        if(item.more.size()>=config.MaxItemMoreSize)
             continue;
         bool flag=false;
         for(QString s : config.itemsList)

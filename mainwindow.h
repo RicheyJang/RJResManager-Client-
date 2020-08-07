@@ -46,6 +46,8 @@ private slots:
     void agreeKeeper();
     void disagreeKeeper();
     void againOrder();
+    void whenPrintOrder();
+    void drawPic(QPrinter *printerPixmap);
 
     void finishPost(QNetworkReply* reply);
     void on_newItemOrder();
@@ -65,6 +67,9 @@ private:
     void setHistoryButton();
     bool changeStatus(int orderID, QString toStatus);
     bool finishOrder(int orderID);
+
+    void printOrder(OneOrder order);
+    void createPix(QPixmap *pix);
 };
 
 #ifndef ISMAINCPP

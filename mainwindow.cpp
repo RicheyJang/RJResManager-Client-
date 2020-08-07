@@ -174,11 +174,13 @@ void MainWindow::setDealButton()
         connect(dealButton[3], &QPushButton::clicked, this, &MainWindow::disagreeAdmin);
         num = 3;
     } else if (thisUser.identity == QString("keeper")) {
-        dealButton[1] = new QPushButton(QString("已出(入)库完成"));
-        connect(dealButton[1], &QPushButton::clicked, this, &MainWindow::agreeKeeper);
-        dealButton[2] = new QPushButton(QString("无法出库"));
-        connect(dealButton[2], &QPushButton::clicked, this, &MainWindow::disagreeKeeper);
-        num = 2;
+        dealButton[1] = new QPushButton(QString("打印订单"));
+        connect(dealButton[1], &QPushButton::clicked, this, &MainWindow::whenPrintOrder);
+        dealButton[2] = new QPushButton(QString("已出(入)库完成"));
+        connect(dealButton[2], &QPushButton::clicked, this, &MainWindow::agreeKeeper);
+        dealButton[3] = new QPushButton(QString("无法出库"));
+        connect(dealButton[3], &QPushButton::clicked, this, &MainWindow::disagreeKeeper);
+        num = 3;
     } else if (thisUser.identity == QString("accountant")) {
     }
     ui->buttomLayout->addStretch();
@@ -348,6 +350,164 @@ void MainWindow::finishPost(QNetworkReply* reply)
 }
 /*-----------修改状态end------------*/
 
+/*----------打印订单----------------*/
+void MainWindow::whenPrintOrder()
+{
+    int id = ui->orderTable->getCurrentID();
+    if (id == 0)
+        return;
+    OneOrder* order = getOrder(id, dealorders);
+    if (order == nullptr) {
+        QMessageBox::warning(nullptr, QString("错误"), QString("失败，请稍后重试"));
+        return;
+    }
+    printOrder(*order);
+}
+void MainWindow::printOrder(OneOrder order)
+{
+    QPrinter printer(QPrinter::HighResolution);
+    //自定义纸张大小，特别重要，不然预览效果极差
+    printer.setPageSize(QPrinter::Custom);
+    printer.setPaperSize(QSizeF(1100,1550),
+                         QPrinter::Point);
+    QPrintPreviewDialog preview(&printer, this);// 创建打印预览对话框
+
+    preview.setMinimumSize(1000,600);
+    /*
+     * QPrintPreviewDialog类提供了一个打印预览对话框，里面功能比较全，
+     * paintRequested(QPrinter *printer)是系统提供的，
+     * 当preview.exec()执行时该信号被触发，
+     * drawPic(QPrinter *printer)是自定义的槽函数，图像的绘制就在这个函数里。
+     */
+    //drawPic(preview.printer());
+    connect(&preview, SIGNAL(paintRequested(QPrinter*)),this, SLOT(drawPic(QPrinter*)));
+
+    preview.exec();
+}
+void MainWindow::drawPic(QPrinter *printerPixmap)
+{
+    QPixmap pix = QPixmap(1100,1550);
+    //这个函数算是画模板的函数吧，毕竟打印时有模板的
+    createPix(&pix);
+    //pix.save("./pix.png");
+    //pix.save(sFilePix);
+    //纵向：Portrait 横向：Landscape
+    printerPixmap->setOrientation(QPrinter::Landscape);
+    //获取界面的图片
+    QPainter painterPixmap(this);
+    painterPixmap.begin(printerPixmap);
+    QRect rect = painterPixmap.viewport();
+    int x = rect.width() / pix.width();
+    int y = rect.height() / pix.height();
+    //设置图像长宽是原图的多少倍
+    painterPixmap.scale(x, y);
+    painterPixmap.drawPixmap(0, 0, pix);
+    painterPixmap.end();
+}
+void MainWindow::createPix(QPixmap *pix)
+{
+    int wSize=1100,hSize=1550;
+    int lBorder=50,rBorder=wSize-50,uBorder=50,dBorder=hSize-50;
+    int yPis[6]={uBorder,uBorder+100,uBorder+150,uBorder+190,dBorder-350,dBorder-250};
+    int fontW=rBorder-lBorder,fontH=30;
+
+    QPainter *painter = new QPainter(this);
+    painter->begin(pix);
+    painter->setRenderHint(QPainter::Antialiasing, true);
+    // 设置画笔颜色、宽度
+    painter->setPen(QPen(QColor(255, 255, 255), 2));
+    // 设置画刷颜色
+    painter->setBrush(QColor(255, 255, 255));
+    QRect rect(0,0,wSize,hSize);
+    //整张图设置画刷白底
+    painter->fillRect(rect,QColor(255, 255, 255));
+    painter->drawRect(rect);
+
+    int id = ui->orderTable->getCurrentID();
+    if (id == 0){
+        painter->end();
+        return;
+    }
+    OneOrder* order = getOrder(id, dealorders);
+    if (order == nullptr) {
+        painter->end();
+        return;
+    }
+
+    //画数据部分的线条
+    painter->setPen(QPen(QColor(0, 0, 0), 2));
+    QVector<QLine> lines;
+    lines.append(QLine(QPoint(lBorder,uBorder),QPoint(rBorder,uBorder)));//上边
+    lines.append(QLine(QPoint(rBorder,uBorder),QPoint(rBorder,dBorder)));//右边
+    lines.append(QLine(QPoint(lBorder,dBorder),QPoint(rBorder,dBorder)));//下边
+    lines.append(QLine(QPoint(lBorder,uBorder),QPoint(lBorder,dBorder)));//左边
+    lines.append(QLine(QPoint(lBorder,yPis[1]),QPoint(rBorder,yPis[1])));//第一部分标题下边
+    lines.append(QLine(QPoint(lBorder,yPis[2]),QPoint(rBorder,yPis[2])));//第二部分信息下边
+    lines.append(QLine(QPoint(lBorder,yPis[3]),QPoint(rBorder,yPis[3])));//第三部分分栏下边
+    lines.append(QLine(QPoint(lBorder,yPis[4]),QPoint(rBorder,yPis[4])));//第四部分物品列表下边
+    lines.append(QLine(QPoint(130,yPis[2]),QPoint(130,yPis[3])));//类型分割边
+    lines.append(QLine(QPoint(200,yPis[2]),QPoint(200,yPis[3])));//类型分割边
+    lines.append(QLine(QPoint(270,yPis[2]),QPoint(270,yPis[3])));//类型分割边
+    lines.append(QLine(QPoint(340,yPis[2]),QPoint(340,yPis[3])));//类型分割边
+    lines.append(QLine(QPoint(450,yPis[2]),QPoint(450,yPis[3])));//类型分割边
+    lines.append(QLine(QPoint(lBorder,yPis[5]),QPoint(rBorder,yPis[5])));//第五部分下边
+    painter->drawLines(lines);
+    QFont font;
+    //font.setPixelSize(300);
+    font.setPointSize(13);
+    font.setFamily("黑体");
+
+    //font.setItalic(true);
+    painter->setRenderHint(QPainter::TextAntialiasing, true);
+    painter->setFont(font);
+
+    //第一部分
+    //painter->drawText(50,50,700,40,Qt::AlignCenter,QString("单位"));//单位名称
+    painter->drawText(QPoint(650,yPis[1]-30),QString("No: ")+QString::number(order->id));
+    font.setPointSize(20);
+    painter->setFont(font);
+    painter->drawText(lBorder,uBorder+30,fontW,60,Qt::AlignCenter,QString("订单"));//报告名称
+    font.setPointSize(13);
+    painter->setFont(font);
+    //第二部分
+    painter->drawText(lBorder,yPis[1],fontW,yPis[2]-yPis[1],Qt::AlignVCenter,QString("使用班级： ")+order->useclass);
+    painter->drawText(lBorder+350,yPis[1],fontW,yPis[2]-yPis[1],Qt::AlignVCenter,QString("车间： ")+order->workshop);
+    //第三部分
+    painter->drawText(50,yPis[2]+5,70,fontH,Qt::AlignCenter,"序号");
+    painter->drawText(130,yPis[2]+5,70,fontH,Qt::AlignCenter,"品类");
+    painter->drawText(200,yPis[2]+5,70,fontH,Qt::AlignCenter,"名称");
+    painter->drawText(270,yPis[2]+5,70,fontH,Qt::AlignCenter,"类型");
+    painter->drawText(340,yPis[2]+5,110,fontH,Qt::AlignCenter,"数目");
+    painter->drawText(450,yPis[2]+5,70,fontH,Qt::AlignCenter,"备注");
+    //第四部分 物品列表
+    int rowPix=5;
+    for(OneItem item : order->items)
+    {
+        OneResItem rItem=getResItem(item.pid);
+        if(rItem.pid==0)
+            continue;
+        painter->drawText(53,yPis[3]+rowPix,70,fontH,Qt::AlignCenter,QString::number(item.pid));
+        painter->drawText(130,yPis[3]+rowPix,70,fontH,Qt::AlignCenter,rItem.res);
+        painter->drawText(200,yPis[3]+rowPix,70,fontH,Qt::AlignCenter,rItem.name);
+        painter->drawText(270,yPis[3]+rowPix,70,fontH,Qt::AlignCenter,rItem.type);
+        QString s=QString::number(item.number,'g',2)+rItem.units;
+        painter->drawText(340,yPis[3]+rowPix,110,fontH,Qt::AlignCenter,s);
+        painter->drawText(450,yPis[3]+rowPix,fontW-450,fontH,Qt::AlignLeft,item.more);
+        rowPix+=fontH;
+    }
+    //第五部分
+    painter->drawText(lBorder,yPis[4]+5,fontW,fontH,Qt::AlignVCenter,QString("申请教师： "));
+    painter->drawText(lBorder+fontW/2,yPis[4]+5,fontW,fontH,Qt::AlignVCenter,QString("仓库管理员： "));
+    painter->drawText(lBorder,yPis[5]-40,fontW,fontH,
+                      Qt::AlignVCenter,QString("发起日期：")+order->starttime.toString(QString("yyyy年MM月dd日")));
+    painter->drawText(lBorder+fontW/2,yPis[5]-40,fontW,fontH,Qt::AlignVCenter,QString("领取日期：     年   月  日"));
+    //第六部分
+    painter->drawText(lBorder,yPis[5],fontW,dBorder-yPis[5],Qt::AlignVCenter,QString("备注： "));
+
+    painter->end();
+}
+/*----------打印订单end--------------*/
+
 /*-----------菜单栏-----------------*/
 void MainWindow::on_newItemOrder()
 {
@@ -364,9 +524,9 @@ void MainWindow::on_about_me_triggered()
 
 void MainWindow::on_about_writer_triggered()
 {
-    QString emailA = QString("richeyjang@163.com");
+    QString emailA = QString("<a href='mailto:richeyjang@163.com'>richeyjang@163.com</a>");
     QString text = QString("RJ仓库管理系统 v") + config.nowClientVersion
-        + QString("\n反馈：") + emailA + QString("\n\t作者：姜雨奇\n\t院校：HUST");
+        + QString("<br>反馈：") + emailA + QString("<br>作者：姜雨奇<br>院校：HUST");
     QMessageBox::information(nullptr, QString("关于本软件"), text);
 }
 

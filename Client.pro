@@ -1,6 +1,7 @@
 QT       += core gui network
 QT += sql
 QT += xlsx
+QT += printsupport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -30,6 +31,7 @@ SOURCES += \
     newOrder.cpp \
     newitemorder.cpp \
     papertable.cpp \
+    userdialog.cpp \
     usermanager.cpp
 
 HEADERS += \
@@ -45,6 +47,7 @@ HEADERS += \
     newitemorder.h \
     neworder.h \
     papertable.h \
+    userdialog.h \
     usermanager.h
 
 FORMS += \
@@ -55,6 +58,7 @@ FORMS += \
     newitemorder.ui \
     neworder.ui \
     papertable.ui \
+    userdialog.ui \
     usermanager.ui
 
 # Default rules for deployment.

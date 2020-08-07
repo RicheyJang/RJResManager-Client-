@@ -107,7 +107,7 @@ void NewOrder::addOneItem(OneItem item)
     name->setFlags(name->flags() & (~Qt::ItemIsEditable));
     type->setFlags(type->flags() & (~Qt::ItemIsEditable));
     num->setFlags(num->flags() & (~Qt::ItemIsEditable));
-    more->setFlags(Qt::ItemIsEnabled | Qt::ItemIsEditable);
+    more->setFlags(more->flags() & (~Qt::ItemIsEditable));
     ui->itemTable->setItem(row, 1, res);
     ui->itemTable->setItem(row, 2, name);
     ui->itemTable->setItem(row, 3, type);
@@ -177,6 +177,11 @@ void NewOrder::on_addItem_clicked()
     item.pid = pid;
     item.number = num;
     item.more = ui->itemMoreEdit->text();
+    if(item.more.size()>=config.MaxItemMoreSize)
+    {
+        QMessageBox::information(nullptr, QString("错误"), QString("备注过长，请勿超过%0个字").arg(config.MaxItemMoreSize));
+        return;
+    }
     addOneItem(item);
 }
 
@@ -240,6 +245,11 @@ void NewOrder::on_confirm_clicked()
     orderInf.insert("useclass", QJsonValue(ui->classEdit->text()));
     if (dowhat == ONADDNEWORDER)
         orderInf.insert("starttime", QJsonValue(QDate::currentDate().toString("yyyy-MM-dd")));
+    if(ui->moreEdit->toPlainText().size()>=config.MaxOrderMoreSize)
+    {
+        QMessageBox::information(nullptr, QString("错误"), QString("备注过长，请勿超过%0个字").arg(config.MaxOrderMoreSize));
+        return;
+    }
     orderInf.insert("more", QJsonValue(ui->moreEdit->toPlainText()));
     //WARNING 订单所属车间的添加 暂未考虑教师的多身份性
     orderInf.insert("workshop", QJsonValue(thisUser.workshop));

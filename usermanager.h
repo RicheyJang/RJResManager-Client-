@@ -15,6 +15,9 @@ public:
     explicit UserManager(QWidget* parent = nullptr);
     ~UserManager();
 
+private slots:
+    void on_table_User_cellDoubleClicked(int row, int column);
+
 private:
     Ui::UserManager* ui;
     QVector<User> users;

@@ -7,6 +7,8 @@ AboutMe::AboutMe(QWidget* parent)
 {
     ui->setupUi(this);
 
+    setAttribute(Qt::WA_QuitOnClose, false);
+    setAttribute(Qt::WA_DeleteOnClose, true);
     setAboutMe();
     setWindowTitle(QString("关于我"));
 

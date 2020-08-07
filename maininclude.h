@@ -49,6 +49,7 @@
 #include <QToolButton>
 #include <QVector>
 #include <QtAlgorithms>
+#include <QtPrintSupport>
 #include <qmath.h>
 #include <stack>
 #include <unordered_map>
@@ -62,10 +63,13 @@ public:
     int serverPort;
     int dataPort;
     int MaxHistoryOrders;
+    int MaxItemMoreSize,MaxOrderMoreSize;
     QString UserAgent;
     QString basename;
     QStringList statusList;
     QStringList itemsList;
+    QStringList userIdentityList;
+    QStringList userCNIdentityList;
     QString nowClientVersion;
     char itemStartWith[5];
     QDate orderStartDay;
@@ -197,6 +201,7 @@ bool flushNowOrders(QDate start, QDate end);
 bool flushHistoryOrders(QDate start, QDate end);
 OneOrder* getOrder(int id, QVector<OneOrder>& orders);
 bool getAllUsers(QVector<User>& users);
+User* getUserByID(int userID,QVector<User> *users);
 
 bool initResItems();
 void addResItem(OneResItem atype, bool forCheck);

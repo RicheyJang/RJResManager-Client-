@@ -17,6 +17,7 @@ public:
     void changeOrder(QJsonObject json);
     void newResOrder(QJsonObject json);
     void changeResOrder(QJsonObject json);
+    void changeUser(User afUser);
 
     ~Messenger();
 

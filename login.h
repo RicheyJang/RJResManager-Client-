@@ -24,8 +24,8 @@ signals:
     void hasNewVersion();
 
 private slots:
-    void on_checkIn_clicked();
     void closeEvent(QCloseEvent* event) override;
+    void on_checkIn_clicked();
     void finishTrylogin(QNetworkReply* reply);
     void whenSuccesslogin();
     void whenHasNewVersion();
