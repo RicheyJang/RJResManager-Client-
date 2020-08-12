@@ -30,6 +30,8 @@ void UserDialog::setChangeUser(User user)
     setTable(forOne);
     ui->usernameEdit->setReadOnly(true);
     dowhat=ONCHANGEUSER;
+    QString title=QString("修改用户 id:")+QString::number(forOne.id);
+    setWindowTitle(title);
 }
 void UserDialog::setAddNewUser()
 {
@@ -42,6 +44,7 @@ void UserDialog::setAddNewUser()
     forOne.password=nullptr;
     setTable(forOne);
     dowhat=ONADDNEWUSER;
+    setWindowTitle(QString("新增用户"));
 }
 /*--------类型设置end-------*/
 

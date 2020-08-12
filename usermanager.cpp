@@ -9,6 +9,7 @@ UserManager::UserManager(QWidget* parent)
     ui->setupUi(this);
     setAttribute(Qt::WA_QuitOnClose, false);
     setAttribute(Qt::WA_DeleteOnClose, true);
+    setWindowTitle(QString("用户管理"));
 
     ui->table_User->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->table_User->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);

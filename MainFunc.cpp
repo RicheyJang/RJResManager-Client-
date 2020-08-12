@@ -670,5 +670,6 @@ Config::Config(QString filename)
     itemStartWith[1] = '2';
     MaxItemMoreSize=25;
     MaxOrderMoreSize=45;
+    softName=QString("RJ仓库管理系统");
 }
 /*----------配置文件相关end---------*/

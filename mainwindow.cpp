@@ -46,6 +46,7 @@ void MainWindow::flushMainWindow()
 
 void MainWindow::initMainWindow()
 {
+    setWindowTitle(config.softName);
     errorW = new ErrorWidget(this);
     errorW->hide();
     ui->orderTable->setOrderTitle();
@@ -560,7 +561,7 @@ void MainWindow::on_about_me_triggered()
 void MainWindow::on_about_writer_triggered()
 {
     QString emailA = QString("<a href='mailto:richeyjang@163.com'>richeyjang@163.com</a>");
-    QString text = QString("RJ仓库管理系统 v") + config.nowClientVersion
+    QString text = config.softName + QString(" v") + config.nowClientVersion
         + QString("<br>反馈：") + emailA + QString("<br>作者：姜雨奇<br>院校：HUST");
     QMessageBox::information(nullptr, QString("关于本软件"), text);
 }

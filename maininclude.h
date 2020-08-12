@@ -66,6 +66,7 @@ public:
     int MaxItemMoreSize,MaxOrderMoreSize;
     QString UserAgent;
     QString basename;
+    QString softName;
     QStringList statusList;
     QStringList itemsList;
     QStringList userIdentityList;
