@@ -6,25 +6,44 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>433</width>
+    <height>368</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="2" column="1">
-    <widget class="QRadioButton" name="radio_teacher">
-     <property name="text">
-      <string>教师</string>
-     </property>
-    </widget>
-   </item>
    <item row="2" column="2">
     <widget class="QRadioButton" name="radio_admin">
      <property name="text">
       <string>管理员</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="2">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="4" column="2">
+    <widget class="QPushButton" name="conferm">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>35</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>确定</string>
      </property>
     </widget>
    </item>
@@ -46,6 +65,19 @@
      </property>
     </widget>
    </item>
+   <item row="1" column="0" colspan="3">
+    <widget class="QTableWidget" name="table_main">
+     <property name="selectionMode">
+      <enum>QAbstractItemView::NoSelection</enum>
+     </property>
+     <attribute name="horizontalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="verticalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+    </widget>
+   </item>
    <item row="0" column="0">
     <widget class="QLabel" name="label_2">
      <property name="maximumSize">
@@ -59,44 +91,15 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="2">
-    <widget class="QPushButton" name="conferm">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>35</height>
-      </size>
-     </property>
+   <item row="2" column="1">
+    <widget class="QRadioButton" name="radio_teacher">
      <property name="text">
-      <string>确定</string>
+      <string>教师</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="0" colspan="2">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="1" column="0" colspan="3">
-    <widget class="QTableWidget" name="table_main">
-     <property name="selectionMode">
-      <enum>QAbstractItemView::NoSelection</enum>
-     </property>
-     <attribute name="horizontalHeaderVisible">
-      <bool>false</bool>
-     </attribute>
-     <attribute name="verticalHeaderVisible">
-      <bool>false</bool>
-     </attribute>
-    </widget>
+   <item row="3" column="0" colspan="3">
+    <layout class="QGridLayout" name="layout_changePass"/>
    </item>
   </layout>
  </widget>

@@ -2,6 +2,8 @@
 #define ABOUTME_H
 
 #include "maininclude.h"
+#include "messenger.h"
+#include <QCloseEvent>
 #include <QWidget>
 
 namespace Ui {
@@ -19,10 +21,15 @@ signals:
 
 private slots:
     void on_conferm_clicked();
+    void whenNeedChangePass();
+    void getChangeReply(QNetworkReply* reply);
+    void closeEvent(QCloseEvent *event) override;
 
 private:
     Ui::AboutMe* ui;
-
+    QLineEdit *oldPassEdit,*newPassEdit,*newPassAgEdit;
+    QLabel *tipLabel;
+    bool needChangePass;
     void setAboutMe();
 };
 

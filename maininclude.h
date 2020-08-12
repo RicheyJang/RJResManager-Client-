@@ -215,6 +215,11 @@ QStringList getNameList(QString res);
 QStringList getTypeList(QString res, QString name);
 QSet<OneResItem> getResItemsByRes(QString res);
 
+bool userCheck(User user);
+bool workshopCheck(QString wkname);
+bool truenameCheck(QString name);
+bool usernameCheck(QString username);
+bool passwordCheck(QString password);
 bool regCheck(QString reg, QString s);
 bool orderCheck(OneOrder order);
 

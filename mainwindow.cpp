@@ -26,18 +26,11 @@ void MainWindow::flushMainWindow()
         ui->store->menuAction()->setVisible(false);
     else {
         ui->store->menuAction()->setVisible(true);
-        initNewItems(); //TODO 入库订单提示栈待写
+        initNewItems();
         if (dealResOrders.size() > 0) {
-            ErrorWidget* ew = new ErrorWidget(this);
             QString tips = QString("<font color=green>您有新的待处理<font color=red>入库账目</font>，请及时处理</font>");
-            ew->setTipInfo(tips);
-            ew->show();
-        }
-        if(thisUser.identity == QString("keeper"))
-        {
-            QAction* newItemAction=new QAction(QString("物品入库"));
-            connect(newItemAction,&QAction::triggered,this,&MainWindow::on_newItemOrder);
-            ui->store->addAction(newItemAction);
+            errorW->setTipInfo(tips);
+            errorW->show();
         }
     }
     if (thisUser.identity != QString("admin"))
@@ -53,10 +46,24 @@ void MainWindow::flushMainWindow()
 
 void MainWindow::initMainWindow()
 {
+    errorW = new ErrorWidget(this);
+    errorW->hide();
     ui->orderTable->setOrderTitle();
     for (int i = 0; i < 10; i++)
         dealButton[i] = nullptr;
+
     flushMainWindow();
+
+    if(thisUser.identity == QString("keeper"))
+    {
+        QAction* newItemAction=new QAction(QString("物品入库"));
+        connect(newItemAction,&QAction::triggered,this,&MainWindow::on_newItemOrder);
+        ui->store->addAction(newItemAction);
+        QAction* newItemTemplateAction=new QAction(QString("生成添加物品模板..."));
+        connect(newItemTemplateAction,&QAction::triggered,this,&MainWindow::on_newItemOrderTemplate);
+        ui->store->addAction(newItemTemplateAction);
+    }
+
     messenger=new Messenger();
     connect(messenger,&Messenger::gotResponse,this,&MainWindow::finishPost);
     on_showDeal_clicked();
@@ -513,6 +520,34 @@ void MainWindow::on_newItemOrder()
 {
     NewItemOrder* nio=new NewItemOrder();
     nio->show();
+}
+
+void MainWindow::on_newItemOrderTemplate()
+{
+    QString file=QFileDialog::getSaveFileName(nullptr,QString("选择保存路径"),"/添加物品模板","Exel file(*.xlsx)");
+    if(file==nullptr || !file.endsWith(".xlsx"))
+        return;
+    QXlsx::Document xlsx;
+    xlsx.write(1,1,QString("大类"));
+    xlsx.write(1,2,QString("名称"));
+    xlsx.write(1,3,QString("型号"));
+    xlsx.write(1,4,QString("数量"));
+    xlsx.write(1,5,QString("单位"));
+    xlsx.write(1,6,QString("备注"));
+    xlsx.saveAs(file);
+}
+
+void MainWindow::on_people_template_triggered()
+{
+    QString file=QFileDialog::getSaveFileName(nullptr,QString("选择保存路径"),"/添加人员模板","Exel file(*.xlsx)");
+    if(file==nullptr || !file.endsWith(".xlsx"))
+        return;
+    QXlsx::Document xlsx;
+    xlsx.write(1,1,QString("用户名"));
+    xlsx.write(1,2,QString("真实姓名"));
+    xlsx.write(1,3,QString("所属车间"));
+    xlsx.write(1,4,QString("身份"));
+    xlsx.saveAs(file);
 }
 
 void MainWindow::on_about_me_triggered()

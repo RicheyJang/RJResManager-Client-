@@ -101,9 +101,35 @@ void Messenger::changeResOrder(QJsonObject json)
 {
     postON(json, QString("/change/forItemOrder"));
 }
-void Messenger::changeUser(User afUser)
+void Messenger::changeUser(QJsonObject json)
 {
-    //TODO 修改用户
+    postON(json, QString("/user/Change"));
+}
+void Messenger::addnewUser(QVector<User> theUsers)
+{
+    QJsonObject json;
+    QJsonObject userInf;
+    userInf.insert("username", thisUser.username);
+    userInf.insert("password", thisUser.password);
+
+    QJsonArray theApps; //用户序列
+
+    for(User forOne : theUsers)
+    {
+        QJsonObject appInf;
+        appInf.insert("username",forOne.username);
+        appInf.insert("truename",forOne.truename);
+        appInf.insert("workshop",forOne.workshop);
+        int isUse=forOne.isUseful ? 1 : 0;
+        appInf.insert("isUseful",isUse);
+        appInf.insert("identity",forOne.identity);
+        theApps.append(QJsonValue(appInf));
+    }
+
+    json.insert("userInformation", QJsonValue(userInf));
+    json.insert("applicantInformation", QJsonValue(theApps));
+
+    postON(json, QString("/user/AddNew")); //uri
 }
 
 //槽函数：

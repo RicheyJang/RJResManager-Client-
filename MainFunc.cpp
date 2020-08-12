@@ -525,6 +525,51 @@ bool ResItemsTrie::insert(OneResItem item)
 /*----------物品相关函数end----------*/
 
 /*----------检查相关函数------------*/
+bool userCheck(User user)
+{
+    if(!usernameCheck(user.username))
+        return false;
+    if(!truenameCheck(user.truename))
+        return false;
+    if(user.password!=nullptr && !passwordCheck(user.password))
+        return false;
+    if(!workshopCheck(user.workshop))
+        return false;
+    for(QString s : config.userIdentityList)
+    {
+        if(s==user.identity)
+            return true;
+    }
+    return false;
+}
+bool workshopCheck(QString wkname)
+{
+    if(wkname==nullptr)
+        return false;
+    QString namereg("^(\\w){2,11}$");
+    return regCheck(namereg, wkname);
+}
+bool truenameCheck(QString name)
+{
+    if(name==nullptr)
+        return false;
+    QString namereg("^(\\w){1,10}$");
+    return regCheck(namereg, name);
+}
+bool usernameCheck(QString name)
+{
+    if(name==nullptr)
+        return false;
+    QString namereg("^(\\w){3,20}$");
+    return regCheck(namereg, name);
+}
+bool passwordCheck(QString password)
+{
+    if(password==nullptr)
+        return false;
+    QString pwreg("^([A-Za-z0-9]|[._]){6,20}$");
+    return regCheck(pwreg, password);
+}
 bool regCheck(QString reg, QString s) //正则表达式格式化检查 用于检查用户名和密码格式
 {
     QRegExp rx(reg);

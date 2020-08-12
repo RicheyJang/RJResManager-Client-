@@ -24,7 +24,24 @@ Login::~Login()
     delete ui;
 }
 
-int Login::trylogin(QString username, QString password)
+void Login::on_checkIn_clicked() //点击登录按钮，并检查用户名密码
+{
+    QString name = ui->idEdit->text();
+    QString psword = ui->passwordEdit->text();
+    if (name.size() <= 0 || name.size() >= MaxIDLength || psword.size() <= 0 || psword.size() >= MaxIDLength) {
+        ui->statusLable->setText(QString("请正确输入账号密码"));
+        ui->statusLable->setStyleSheet("color:red");
+        return;
+    }
+    if (!passwordCheck(psword) || !usernameCheck(name)) {
+        ui->statusLable->setText(QString("账号密码格式错误"));
+        ui->statusLable->setStyleSheet("color:red");
+        return;
+    }
+    trylogin(name, psword);
+}
+
+int Login::trylogin(QString username, QString password) //开始登录
 {
     QJsonObject json;
     json.insert("username", username);
@@ -53,7 +70,7 @@ int Login::trylogin(QString username, QString password)
     return 1;
 }
 
-void Login::finishTrylogin(QNetworkReply* reply)
+void Login::finishTrylogin(QNetworkReply* reply) //登录后，接收信息并进行检查
 {
     int state = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).value<int>();
     if (state == 200) {
@@ -129,54 +146,24 @@ void Login::finishTrylogin(QNetworkReply* reply)
     manager->deleteLater();
 }
 
-void Login::on_checkIn_clicked()
-{
-    QString name = ui->idEdit->text();
-    QString psword = ui->passwordEdit->text();
-    if (name.size() <= 0 || name.size() >= MaxIDLength || psword.size() <= 0 || psword.size() >= MaxIDLength) {
-        ui->statusLable->setText(QString("请正确输入账号密码"));
-        ui->statusLable->setStyleSheet("color:red");
-        return;
-    }
-    QString pwreg("^([A-Za-z0-9]|[._]){6,20}$");
-    QString namereg("^(\\w){3,20}$");
-    if (!regCheck(namereg, name) || !regCheck(pwreg, psword)) {
-        ui->statusLable->setText(QString("账号密码格式错误"));
-        ui->statusLable->setStyleSheet("color:red");
-        return;
-    }
-    trylogin(name, psword);
-}
-
 void Login::closeEvent(QCloseEvent* event)
 {
     emit suddenClose();
 }
 
-void Login::whenSuccesslogin()
+void Login::whenSuccesslogin() //成功登录信号
 {
     ui->statusLable->setText(QString("登录成功"));
     ui->statusLable->setStyleSheet("color:green");
     allInit();
 }
-void Login::whenHasNewVersion()
-{
-    QString url = "http://" + config.ip + ":" + QString::number(config.serverPort) + "/download" + "/RJ-setup-latest.exe";
-    ui->statusLable->setOpenExternalLinks(true);
-    ui->statusLable->setStyleSheet("color:black");
-    QString here = "<a href=\"" + url + QString("\">这里</a>");
-    QString text = QString("有新版本！点击") + here + QString("下载");
-    ui->statusLable->setText(text);
-    ui->checkIn->setDisabled(true);
-    //TODO 下载新版本download待写
-    //ui->statusLable->setText(QString("下载新版本中，下载完成后请删除老版本"));
-}
-void Login::whenFaillogin()
+
+void Login::whenFaillogin() //登录失败信号
 {
     ui->statusLable->setText(QString("登录失败"));
     ui->statusLable->setStyleSheet("color:red");
 }
-void Login::whenWrongpassword()
+void Login::whenWrongpassword() //密码错误信号
 {
     ui->statusLable->setText(QString("账号或密码错误"));
     ui->statusLable->setStyleSheet("color:red");
@@ -217,6 +204,19 @@ void Login::allInit() //全局初始化
     ui->progressBar->setValue(100);
     emit allSuccess();
     this->hide();
+}
+
+void Login::whenHasNewVersion() //有新版本
+{
+    QString url = "http://" + config.ip + ":" + QString::number(config.serverPort) + "/download" + "/RJ-setup-latest.exe";
+    ui->statusLable->setOpenExternalLinks(true);
+    ui->statusLable->setStyleSheet("color:black");
+    QString here = "<a href=\"" + url + QString("\">这里</a>");
+    QString text = QString("有新版本！点击") + here + QString("下载");
+    ui->statusLable->setText(text);
+    ui->checkIn->setDisabled(true);
+    //TODO 下载新版本download待写
+    //ui->statusLable->setText(QString("下载新版本中，下载完成后请删除老版本"));
 }
 
 void Login::download(QString url)

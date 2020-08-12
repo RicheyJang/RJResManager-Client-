@@ -108,6 +108,7 @@
      <string>人员</string>
     </property>
     <addaction name="people_change"/>
+    <addaction name="people_template"/>
    </widget>
    <widget class="QMenu" name="about">
     <property name="title">
@@ -139,6 +140,11 @@
   <action name="about_writer">
    <property name="text">
     <string>关于作者</string>
+   </property>
+  </action>
+  <action name="people_template">
+   <property name="text">
+    <string>生成添加人员模板...</string>
    </property>
   </action>
  </widget>

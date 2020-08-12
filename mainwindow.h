@@ -51,15 +51,18 @@ private slots:
 
     void finishPost(QNetworkReply* reply);
     void on_newItemOrder();
+    void on_newItemOrderTemplate();
     void on_about_me_triggered();
     void on_about_writer_triggered();
     void on_store_showAll_triggered();
     void on_showHistory_clicked();
-    void on_people_change_triggered();
+    void on_people_change_triggered();  
+    void on_people_template_triggered();
 
 private:
     Login* login;
     Messenger* messenger;
+    ErrorWidget* errorW;
     Ui::MainWindow* ui;
     QPushButton* dealButton[10] = { nullptr };
     void setDealButton();
