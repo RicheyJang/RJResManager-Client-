@@ -9,8 +9,9 @@ QString getOrderSql(int onwhich, QVector<int> idenCheckFor)
 {
     QString sql = "";
     if (onwhich == ONDealOrder || onwhich == ONNowOrder) {
-        Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-        QSqlDatabase database = base->getDatabase();
+        //Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+        useBase->open();
+        QSqlDatabase database = useBase->getDatabase();
         QSqlQuery query(database);
         QSqlQuery itemQuery(database);
         QString iden = thisUser.identity;
@@ -50,8 +51,6 @@ QString getOrderSql(int onwhich, QVector<int> idenCheckFor)
         statusCheck.remove(0, 3);
         statusCheck = " ( " + statusCheck + " ) ";
         sql = idCheck + " and " + statusCheck;
-        base->close();
-        delete base;
     } else if (onwhich == ONHistory) {
         if (thisUser.identity != QString("teacher")) {
             QString iden = thisUser.identity + "='" + thisUser.truename + "'";
@@ -76,15 +75,15 @@ QString getOrderSql(int onwhich, QVector<int> idenCheckFor, QDate start, QDate e
 }
 bool formOrders(QString MainSql, QString itemMainSql, QString whereSql, QVector<OneOrder>& orders)
 {
-    orders.clear();
-    Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-    if (!base->check())
+    //Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+    if (!useBase->open())
         return false;
-    QSqlDatabase database = base->getDatabase();
+    orders.clear();
+    QSqlDatabase database = useBase->getDatabase();
     QSqlQuery query(database);
     QSqlQuery itemQuery(database);
     if (MainSql == nullptr)
-        MainSql = "select id,workshop,useclass,starttime,usetime,more,teacher,header,admin,keeper,accountant,status from orders";
+        MainSql = "select id,workshop,useclass,starttime,outtime,more,teacher,header,admin,keeper,accountant,status from orders";
     if (itemMainSql == nullptr)
         itemMainSql = "select pid,cnt,status,more from orderitems";
     QString sql = MainSql + " where " + whereSql + ";";
@@ -97,7 +96,7 @@ bool formOrders(QString MainSql, QString itemMainSql, QString whereSql, QVector<
         order->workshop = query.value(1).toString();
         order->useclass = query.value(2).toString();
         order->starttime = query.value(3).toDate();
-        order->usetime = query.value(4).toDateTime();
+        order->outtime = query.value(4).toDateTime();
         order->more = query.value(5).toString();
         order->teacher = query.value(6).toString();
         order->header = query.value(7).toString();
@@ -118,18 +117,16 @@ bool formOrders(QString MainSql, QString itemMainSql, QString whereSql, QVector<
         }
         orders.push_back(*order);
     }
-    base->close();
-    delete base;
     std::sort(orders.begin(), orders.end());
     return true;
 }
 bool formResOrders(QString MainSql, QString itemMainSql, QString whereSql, QVector<OneOrder>& orders)
 {
-    orders.clear();
-    Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-    if (!base->check())
+    //Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+    if (!useBase->open())
         return false;
-    QSqlDatabase database = base->getDatabase();
+    orders.clear();
+    QSqlDatabase database = useBase->getDatabase();
     QSqlQuery query(database);
     QSqlQuery itemQuery(database);
     if (MainSql == nullptr)
@@ -167,8 +164,6 @@ bool formResOrders(QString MainSql, QString itemMainSql, QString whereSql, QVect
         }
         orders.push_back(*order);
     }
-    base->close();
-    delete base;
     std::sort(orders.begin(), orders.end());
     return true;
 }
@@ -208,10 +203,10 @@ bool initNowOrders()
 
 bool initSatus()
 {
-    Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-    if (!base->check())
+    //Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+    if (!useBase->open())
         return false;
-    QSqlDatabase database = base->getDatabase();
+    QSqlDatabase database = useBase->getDatabase();
     QSqlQuery query(database);
     if (!query.exec("select status from authority;"))
         return false;
@@ -221,8 +216,6 @@ bool initSatus()
         QString now = query.value(0).toString();
         config.statusList << now;
     }
-    base->close();
-    delete base;
     return true;
 }
 /*--------------初始化相关end------------*/
@@ -263,7 +256,7 @@ bool flushHistoryOrders(QDate start, QDate end) //刷新历史订单
 {
     QVector<int> tmp;
     QString whereSql = getOrderSql(ONHistory, tmp, start, end);
-    QString MainSql = "select id,workshop,useclass,starttime,usetime,more,teacher,header,admin,keeper,accountant,status from historyorder ";
+    QString MainSql = "select id,workshop,useclass,starttime,outtime,more,teacher,header,admin,keeper,accountant,status from historyorder ";
     QString itemMainSql = "select pid,cnt,status,more from historyitems";
     bool res = formOrders(MainSql, itemMainSql, whereSql, historys);
     return res;
@@ -283,10 +276,10 @@ OneOrder* getOrder(int id, QVector<OneOrder>& orders) //按id查找订单order
 bool getAllUsers(QVector<User>& users)
 {
     users.clear();
-    Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-    if(base==nullptr || !base->check())
+    //Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+    if(!useBase->open())
         return false;
-    QSqlDatabase database = base->getDatabase();
+    QSqlDatabase database = useBase->getDatabase();
     QSqlQuery query(database);
     if(!query.exec("select id,username,truename,identity,workshop,isUseful from user;"))
         return false;
@@ -300,8 +293,8 @@ bool getAllUsers(QVector<User>& users)
         user.isUseful = query.value(5).toBool();
         users.push_back(user);
     }
-    base->close();
-    delete base;
+    //base->close();
+    //delete base;
     std::sort(users.begin(), users.end());
     return true;
 }
@@ -325,9 +318,11 @@ uint qHash(const OneResItem key) //物品set的哈希映射
 bool initResItems()
 {
     //allResItem.clear();
+    if(!useBase->open())
+        return false;
     resItemsTrie.clear();
-    Database base(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-    QSqlDatabase database = base.getDatabase();
+    //Database base(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+    QSqlDatabase database = useBase->getDatabase();
     QSqlQuery query(database);
     query.exec("select pid,res,name,type,units,cnt from allitems;");
     while (query.next()) {
@@ -340,7 +335,6 @@ bool initResItems()
         aResItem.cnt = query.value(5).toDouble();
         addResItem(aResItem, false);
     }
-    base.close();
     return true;
 }
 void addResItem(OneResItem atype, bool forCheck = false) //添加物品

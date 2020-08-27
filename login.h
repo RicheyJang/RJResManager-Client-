@@ -21,14 +21,14 @@ signals:
     void wrongpassword();
     void suddenClose();
     void allSuccess();
-    void hasNewVersion();
+    void hasNewVersion(QString newVersion);
 
 private slots:
     void closeEvent(QCloseEvent* event) override;
     void on_checkIn_clicked();
     void finishTrylogin(QNetworkReply* reply);
     void whenSuccesslogin();
-    void whenHasNewVersion();
+    void whenHasNewVersion(QString newVersion);
     void whenFaillogin();
     void whenWrongpassword();
 

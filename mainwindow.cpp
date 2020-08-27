@@ -13,6 +13,12 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    useBase->close();
+    delete useBase;
+}
+
 void MainWindow::setLoginWindow(Login* _login)
 {
     this->login = _login;
@@ -67,7 +73,6 @@ void MainWindow::initMainWindow()
 
     messenger=new Messenger();
     connect(messenger,&Messenger::gotResponse,this,&MainWindow::finishPost);
-    on_showDeal_clicked();
     this->show();
 }
 
@@ -525,7 +530,7 @@ void MainWindow::on_newItemOrder()
 
 void MainWindow::on_newItemOrderTemplate()
 {
-    QString file=QFileDialog::getSaveFileName(nullptr,QString("选择保存路径"),"/添加物品模板","Exel file(*.xlsx)");
+    QString file=QFileDialog::getSaveFileName(nullptr,QString("选择保存路径"),"/添加物品模板","Excel file(*.xlsx)");
     if(file==nullptr || !file.endsWith(".xlsx"))
         return;
     QXlsx::Document xlsx;
@@ -540,7 +545,7 @@ void MainWindow::on_newItemOrderTemplate()
 
 void MainWindow::on_people_template_triggered()
 {
-    QString file=QFileDialog::getSaveFileName(nullptr,QString("选择保存路径"),"/添加人员模板","Exel file(*.xlsx)");
+    QString file=QFileDialog::getSaveFileName(nullptr,QString("选择保存路径"),"/添加人员模板","Excel file(*.xlsx)");
     if(file==nullptr || !file.endsWith(".xlsx"))
         return;
     QXlsx::Document xlsx;

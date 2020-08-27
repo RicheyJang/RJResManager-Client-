@@ -148,7 +148,7 @@ public:
     QString accountant;
     QString status;
     QDate starttime;
-    QDateTime usetime;
+    QDateTime outtime;
     bool operator<(const OneOrder a) const
     {
         return id < a.id;
@@ -187,6 +187,7 @@ extern QVector<OneResOrder> dealResOrders;
 extern User thisUser;
 extern Config config;
 extern ResItemsTrie resItemsTrie;
+extern Database *useBase;
 #endif
 /*全局变量声明结束*/
 

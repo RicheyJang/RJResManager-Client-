@@ -87,6 +87,13 @@ void NewItemOrder::showOrder(OneResOrder order) //展示订单 窗口
     }
     ui->moreEdit->setReadOnly(true);
     setOrder(order);
+
+    QLabel* label[2];
+    label[0]=new QLabel(QString("入库时间："));
+    ui->Layout_add->addWidget(label[0],0,0);
+    label[1]=new QLabel(order.starttime.toString(QString("yyyy年MM月dd日")));
+    ui->Layout_add->addWidget(label[1],0,1);
+
     QString title = QString("当前账目 编号：") + QString::number(order.id);
     setWindowTitle(title);
 }

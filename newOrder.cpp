@@ -73,7 +73,19 @@ void NewOrder::showOrder(OneOrder order) //展示订单 窗口
     ui->classEdit->setReadOnly(true);
     ui->moreEdit->setReadOnly(true);
     setOrder(order);
+    QLabel* label[4];
+    label[0]=new QLabel(QString("发起时间："));
+    ui->Layout_showTime->addWidget(label[0],0,0);
+    label[1]=new QLabel(order.starttime.toString(QString("yyyy年MM月dd日")));
+    ui->Layout_showTime->addWidget(label[1],0,1);
     QString title = QString("当前订单 编号：") + QString::number(order.id);
+    if(order.items.size()>0 && order.outtime.isValid())
+    {
+        label[2]=new QLabel(QString("出库时间："));
+        label[3]=new QLabel(order.outtime.toString(QString("yyyy年MM月dd日 hh:mm")));
+        ui->Layout_showTime->addWidget(label[2],0,2);
+        ui->Layout_showTime->addWidget(label[3],0,3);
+    }
     setWindowTitle(title);
 }
 /*----------辅助函数--------------*/

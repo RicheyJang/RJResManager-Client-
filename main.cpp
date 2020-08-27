@@ -12,6 +12,7 @@ QVector<OneOrder> historys;
 QVector<OneResOrder> dealResOrders;
 User thisUser;
 Config config("./config.ini");
+Database *useBase;
 
 /* 免登录，测试所用
 int main(int argc, char* argv[])

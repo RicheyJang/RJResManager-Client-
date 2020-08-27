@@ -23,136 +23,6 @@
    <property name="spacing">
     <number>5</number>
    </property>
-   <item row="0" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>物品列表：</string>
-     </property>
-    </widget>
-   </item>
-   <item row="13" column="1" colspan="4">
-    <widget class="QTextEdit" name="moreEdit">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>150</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="14" column="0" colspan="4">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="13" column="0">
-    <widget class="QLabel" name="label_9">
-     <property name="text">
-      <string>备注：</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0" colspan="6">
-    <widget class="QTableWidget" name="itemTable">
-     <property name="editTriggers">
-      <set>QAbstractItemView::DoubleClicked</set>
-     </property>
-     <property name="selectionMode">
-      <enum>QAbstractItemView::SingleSelection</enum>
-     </property>
-     <property name="selectionBehavior">
-      <enum>QAbstractItemView::SelectRows</enum>
-     </property>
-     <property name="textElideMode">
-      <enum>Qt::ElideMiddle</enum>
-     </property>
-     <property name="sortingEnabled">
-      <bool>true</bool>
-     </property>
-     <attribute name="horizontalHeaderVisible">
-      <bool>false</bool>
-     </attribute>
-     <attribute name="verticalHeaderVisible">
-      <bool>false</bool>
-     </attribute>
-    </widget>
-   </item>
-   <item row="9" column="0" colspan="6">
-    <widget class="QLabel" name="label_11">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>20</height>
-      </size>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-   </item>
-   <item row="11" column="0">
-    <widget class="QLabel" name="label_12">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>20</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>其它信息：</string>
-     </property>
-    </widget>
-   </item>
-   <item row="14" column="4" colspan="2">
-    <layout class="QHBoxLayout" name="Layout_conferm">
-     <item>
-      <widget class="QPushButton" name="confirm">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>40</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>100</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>确定</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="cancel">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>40</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>100</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>取消</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
    <item row="10" column="0" colspan="6">
     <widget class="Line" name="line">
      <property name="orientation">
@@ -203,10 +73,71 @@
      </item>
     </layout>
    </item>
-   <item row="12" column="0">
-    <widget class="QLabel" name="label_8">
+   <item row="15" column="0" colspan="4">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="15" column="4" colspan="2">
+    <layout class="QHBoxLayout" name="Layout_conferm">
+     <item>
+      <widget class="QPushButton" name="confirm">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>100</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>确定</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="cancel">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>100</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>取消</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="9" column="0" colspan="6">
+    <widget class="QLabel" name="label_11">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>20</height>
+      </size>
+     </property>
      <property name="text">
-      <string>使用班级：</string>
+      <string/>
      </property>
     </widget>
    </item>
@@ -338,7 +269,7 @@
      </item>
     </layout>
    </item>
-   <item row="12" column="1" colspan="2">
+   <item row="13" column="1" colspan="2">
     <widget class="QLineEdit" name="classEdit">
      <property name="minimumSize">
       <size>
@@ -348,12 +279,84 @@
      </property>
     </widget>
    </item>
-   <item row="12" column="3" colspan="2">
+   <item row="13" column="3" colspan="2">
     <widget class="QLabel" name="workshopLabel">
      <property name="text">
       <string>所用车间：</string>
      </property>
     </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>物品列表：</string>
+     </property>
+    </widget>
+   </item>
+   <item row="14" column="1" colspan="4">
+    <widget class="QTextEdit" name="moreEdit">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>150</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="14" column="0">
+    <widget class="QLabel" name="label_9">
+     <property name="text">
+      <string>备注：</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="6">
+    <widget class="QTableWidget" name="itemTable">
+     <property name="editTriggers">
+      <set>QAbstractItemView::DoubleClicked</set>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SingleSelection</enum>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <property name="textElideMode">
+      <enum>Qt::ElideMiddle</enum>
+     </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
+     <attribute name="horizontalHeaderVisible">
+      <bool>true</bool>
+     </attribute>
+     <attribute name="verticalHeaderVisible">
+      <bool>true</bool>
+     </attribute>
+    </widget>
+   </item>
+   <item row="11" column="0">
+    <widget class="QLabel" name="label_12">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>其它信息：</string>
+     </property>
+    </widget>
+   </item>
+   <item row="13" column="0">
+    <widget class="QLabel" name="label_8">
+     <property name="text">
+      <string>使用班级：</string>
+     </property>
+    </widget>
+   </item>
+   <item row="12" column="0" colspan="6">
+    <layout class="QGridLayout" name="Layout_showTime"/>
    </item>
   </layout>
  </widget>

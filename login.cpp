@@ -117,8 +117,9 @@ void Login::finishTrylogin(QNetworkReply* reply) //登录后，接收信息并�
         }
         if (flag != 0) {
             flag = 0;
-            Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
-            QSqlDatabase database = base->getDatabase();
+            //Database* base = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+            useBase = new Database(config.ip, config.dataPort, config.basename, thisUser.useName, thisUser.usePassword);
+            QSqlDatabase database = useBase->getDatabase();
             QSqlQuery query(database);
             query.exec("select truename,workshop,storehouse from user where id=" + QString::number(thisUser.id) + ";");
             while (query.next()) {
@@ -127,12 +128,10 @@ void Login::finishTrylogin(QNetworkReply* reply) //登录后，接收信息并�
                 thisUser.storehouse = query.value(2).toString();
                 flag = 1;
             }
-            base->close();
-            delete base;
         }
         if (flag) {
             if (newClientVersion != config.nowClientVersion)
-                emit hasNewVersion();
+                emit hasNewVersion(newClientVersion);
             else
                 emit succsesslogin();
         } else
@@ -206,9 +205,9 @@ void Login::allInit() //全局初始化
     this->hide();
 }
 
-void Login::whenHasNewVersion() //有新版本
+void Login::whenHasNewVersion(QString newVersion) //有新版本
 {
-    QString url = "http://" + config.ip + ":" + QString::number(config.serverPort) + "/download" + "/RJ-setup-latest.exe";
+    QString url = "http://" + config.ip + ":" + QString::number(config.serverPort) + "/download" + "/RJStoreSystem-"+newVersion+"-setup.exe";
     ui->statusLable->setOpenExternalLinks(true);
     ui->statusLable->setStyleSheet("color:black");
     QString here = "<a href=\"" + url + QString("\">这里</a>");

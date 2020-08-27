@@ -24,7 +24,7 @@ class MainWindow : public QMainWindow {
 public:
     MainWindow(QWidget* parent = nullptr);
     void setLoginWindow(Login* login);
-    ~MainWindow();
+    ~MainWindow() override;
 
 private slots:
     void initMainWindow();
@@ -58,6 +58,8 @@ private slots:
     void on_showHistory_clicked();
     void on_people_change_triggered();  
     void on_people_template_triggered();
+
+    void closeEvent(QCloseEvent* event) override;
 
 private:
     Login* login;

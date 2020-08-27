@@ -16,7 +16,7 @@ private:
 public:
     inline bool check()
     {
-        return canUse;
+        return indatabase.isOpen();
     }
     Database(QString _host, int _port, QString _databaseName, QString _userName, QString _password)
         : host(_host)
@@ -49,6 +49,12 @@ public:
             return query.exec(sql);
         }
         return false;
+    }
+    bool open()
+    {
+        if(!check())
+            return indatabase.open();
+        return true;
     }
     void close()
     {
